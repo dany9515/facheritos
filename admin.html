@@ -498,14 +498,23 @@ select.finp{cursor:pointer}
 <div class="toast" id="toast"><span id="t-ic"></span> <span id="t-msg"></span></div>
 <div id="install-btn" onclick="installApp()">📲 Instalar app en el celu</div>
 
+<script>
+window.__fbCfg = {
+  apiKey: "AIzaSyCRWflaqI6K1AJ0uJMqpomnJqPoV_j6Wa4",
+  authDomain: "facheritos-217ab.firebaseapp.com",
+  projectId: "facheritos-217ab",
+  storageBucket: "facheritos-217ab.firebasestorage.app",
+  messagingSenderId: "771186583547",
+  appId: "1:771186583547:web:80e59043dfbd05c2d60d5e"
+};
+</script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy, where, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
-import { firebaseConfig } from '/firebase-config.js';
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(window.__fbCfg);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
@@ -533,9 +542,10 @@ onAuthStateChanged(auth, user => {
     showPage('admin');
     initAdmin();
   } else if (user) {
-    signOut(auth);
-    showLoginErr('No tenés permisos');
+    // Usuario logueado pero no es admin: redirigir a la tienda sin cerrar su sesión
+    location.replace('./index.html');
   }
+  // Sin usuario: queda en la pantalla de login (estado inicial)
 });
 
 window.doLogin = async function() {
@@ -546,7 +556,11 @@ window.doLogin = async function() {
   btn.textContent = 'Ingresando...'; btn.disabled = true;
   try {
     const {user} = await signInWithEmailAndPassword(auth, email, pass);
-    if (user.email !== ADMIN) { await signOut(auth); showLoginErr('No tenés permisos'); }
+    if (user.email !== ADMIN) {
+      // Cerrar la sesión que acabamos de abrir y redirigir a la tienda
+      await signOut(auth);
+      location.replace('./index.html');
+    }
   } catch(e) { showLoginErr('Email o contraseña incorrectos'); }
   btn.textContent = 'Ingresar al panel'; btn.disabled = false;
 }
