@@ -303,7 +303,7 @@ select.finp{cursor:pointer}
     <div class="login-card">
       <h2>👋 Bienvenida</h2>
       <div class="err-box" id="login-err"></div>
-      <div class="fld"><label class="flb">Email</label><input class="finp" id="li-email" type="email" placeholder="admin@facheritos.com" autocomplete="email"></div>
+      <div class="fld"><label class="flb">Email</label><input class="finp" id="li-email" type="email" placeholder="facheritos@operlog.com.ar" autocomplete="email"></div>
       <div class="fld"><label class="flb">Contraseña</label>
         <div class="pass-wrap"><input class="finp" id="li-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"><button class="eye-btn" onclick="togglePass('li-pass',this)">👁️</button></div>
       </div>
@@ -518,7 +518,7 @@ const app = initializeApp(window.__fbCfg);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
-const ADMIN = 'admin@facheritos.com';
+const ADMIN = 'facheritos@operlog.com.ar';
 
 function esc(s) {
   if (s == null) return '';
