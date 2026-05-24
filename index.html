@@ -332,6 +332,16 @@ textarea.finp { resize: none; min-height: 60px; }
 /* TOAST */
 .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #111; color: #fff; border-radius: 100px; padding: 11px 22px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 13px; display: none; align-items: center; gap: 8px; z-index: 999; white-space: nowrap; box-shadow: 0 4px 24px rgba(0,0,0,.3); }
 .toast.on { display: flex; }
+
+/* SORT */
+.sort-sel { border: 1.5px solid #e0e0e0; border-radius: 8px; padding: 5px 10px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 12px; color: #555; background: #fff; outline: none; cursor: pointer; }
+.sort-sel:focus { border-color: #111; }
+
+/* ZOOM */
+#zoom-ov { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,.95); display: none; align-items: center; justify-content: center; overscroll-behavior: contain; }
+#zoom-ov.on { display: flex; }
+#zoom-ov img { max-width: 100%; max-height: 100dvh; object-fit: contain; touch-action: pinch-zoom; }
+#zoom-close { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,.12); border: none; color: #fff; width: 40px; height: 40px; border-radius: 50%; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 </style>
 </head>
 <body>
@@ -426,7 +436,15 @@ textarea.finp { resize: none; min-height: 60px; }
       <div class="products-area">
         <div class="products-header">
           <div class="products-ttl" id="sec-lbl">Todos los productos</div>
-          <div class="products-count" id="prod-count"></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <select id="sort-select" class="sort-sel" onchange="applyFilters()">
+              <option value="nuevo">Más nuevo</option>
+              <option value="precio-asc">Precio ↑</option>
+              <option value="precio-desc">Precio ↓</option>
+              <option value="nombre">A → Z</option>
+            </select>
+            <div class="products-count" id="prod-count"></div>
+          </div>
         </div>
         <div class="prod-grid" id="grid">
           <div class="loading-grid"><div class="spinner"></div></div>
@@ -569,7 +587,14 @@ textarea.finp { resize: none; min-height: 60px; }
     <div class="sheet-ft" id="cart-ft" style="display:none">
       <div class="cart-total-row"><span class="cart-ttl-lbl">Total</span><span class="cart-ttl-num" id="cart-total">$0</span></div>
 
-      <!-- Alias bancario (se muestra si está configurado) -->
+      <!-- Método de pago -->
+      <div class="delivery-label">¿Cómo querés pagar?</div>
+      <div class="delivery-selector">
+        <div class="delivery-opt on" id="opt-transfer" onclick="setPayment('transferencia')">🏦 Transferencia · <span style="color:#2e7d32;font-weight:900">-15%</span></div>
+        <div class="delivery-opt" id="opt-mp" onclick="setPayment('mp')">💳 Mercado Pago</div>
+      </div>
+
+      <!-- Alias bancario (solo si paga por transferencia y está configurado) -->
       <div class="checkout-alias" id="checkout-alias" style="display:none">
         <div class="checkout-alias-label">🏦 Transferí al siguiente alias</div>
         <div class="checkout-alias-value" id="alias-value">—</div>
@@ -611,6 +636,12 @@ textarea.finp { resize: none; min-height: 60px; }
   <button class="filter-apply-btn" onclick="closeMobileFilter()">Ver resultados</button>
 </div>
 
+<!-- ZOOM -->
+<div id="zoom-ov" onclick="closeZoom()">
+  <img id="zoom-img" src="" alt="" onclick="event.stopPropagation()">
+  <button id="zoom-close" onclick="closeZoom()">×</button>
+</div>
+
 <div class="toast" id="toast"><span id="t-ic"></span> <span id="t-msg"></span></div>
 
 <script type="module">
@@ -631,6 +662,7 @@ const ADMIN_EMAIL = 'admin@facheritos.com';
 let currentUser = null;
 let tiendaConfig = {};
 let selectedDelivery = 'retiro';
+let selectedPayment = 'transferencia';
 let comprobanteFile = null;
 let currentPerfil = null;
 let allProductos = [];
@@ -883,6 +915,11 @@ window.applyFilters = function() {
     if (q && !p.nombre?.toLowerCase().includes(q) && !p.categoria?.toLowerCase().includes(q)) return false;
     return true;
   });
+  const sort = document.getElementById('sort-select')?.value || 'nuevo';
+  if (sort === 'precio-asc') f.sort((a, b) => a.precio - b.precio);
+  else if (sort === 'precio-desc') f.sort((a, b) => b.precio - a.precio);
+  else if (sort === 'nombre') f.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
+  else f.sort((a, b) => (b.creado?.seconds || 0) - (a.creado?.seconds || 0));
   renderGrid(f);
   document.getElementById('prod-count').textContent = f.length + (f.length === 1 ? ' producto' : ' productos');
 }
@@ -964,9 +1001,9 @@ window.openDet = function(id) {
   // Armar slides - usar fotos[] si hay múltiples, sino foto_url
   let slides = '';
   if (p.fotos && p.fotos.length > 0) {
-    slides = p.fotos.map(f => `<div class="swiper-slide"><img src="${f.url}" alt="${p.nombre}" loading="lazy"></div>`).join('');
+    slides = p.fotos.map(f => `<div class="swiper-slide"><img src="${f.url}" alt="${p.nombre}" loading="lazy" onclick="openZoom('${f.url}')" style="cursor:zoom-in"></div>`).join('');
   } else if (p.foto_url) {
-    slides = `<div class="swiper-slide"><img src="${p.foto_url}" alt="${p.nombre}"></div>`;
+    slides = `<div class="swiper-slide"><img src="${p.foto_url}" alt="${p.nombre}" onclick="openZoom('${p.foto_url}')" style="cursor:zoom-in"></div>`;
   } else {
     slides = `<div class="swiper-slide"><span class="emoji">${p.emoji || '👶'}</span></div>`;
   }
@@ -1056,7 +1093,26 @@ function renderCartSheet() {
     const imgHtml = p.foto_url ? `<img src="${p.foto_url}">` : p.emoji || '👶';
     return `<div class="ci"><div class="ci-img">${imgHtml}</div><div class="ci-inf"><div class="ci-name">${p.nombre}</div><div class="ci-price">$${Number(p.precio).toLocaleString('es-AR')}</div><div class="qty-row"><button class="q-btn" onclick="chgQty('${p.id}',-1)">−</button><span class="q-n">${item.qty}</span><button class="q-btn" onclick="chgQty('${p.id}',1)">+</button></div></div><button class="ci-rm" onclick="rmCart('${p.id}')"><i class="fa-solid fa-trash"></i></button></div>`;
   }).join('');
-  document.getElementById('cart-total').textContent = '$' + total.toLocaleString('es-AR');
+  const isTransfer = selectedPayment === 'transferencia';
+  const totalMostrar = isTransfer ? Math.round(total * 0.85) : total;
+
+  // Alias: solo si transfiere y hay alias configurado
+  if (tiendaConfig.alias) {
+    document.getElementById('checkout-alias').style.display = isTransfer ? 'block' : 'none';
+  }
+  // Comprobante: solo con transferencia
+  document.getElementById('comp-label').style.display = isTransfer ? 'block' : 'none';
+
+  const totalEl = document.getElementById('cart-total');
+  if (isTransfer) {
+    totalEl.innerHTML = `<span style="font-size:14px;font-family:'Nunito',sans-serif;font-weight:700;color:#bbb;text-decoration:line-through;margin-right:6px">$${total.toLocaleString('es-AR')}</span>$${totalMostrar.toLocaleString('es-AR')}`;
+    totalEl.style.color = '#2e7d32';
+    document.querySelector('.cart-ttl-lbl').textContent = 'Total (transferencia)';
+  } else {
+    totalEl.textContent = '$' + totalMostrar.toLocaleString('es-AR');
+    totalEl.style.color = '';
+    document.querySelector('.cart-ttl-lbl').textContent = 'Total';
+  }
   ft.style.display = 'block';
 }
 
@@ -1076,12 +1132,26 @@ window.setDelivery = function(mode) {
   document.getElementById('opt-envio').classList.toggle('on', mode === 'envio');
 };
 
+window.setPayment = function(method) {
+  selectedPayment = method;
+  document.getElementById('opt-transfer').classList.toggle('on', method === 'transferencia');
+  document.getElementById('opt-mp').classList.toggle('on', method === 'mp');
+  if (method === 'mp') {
+    comprobanteFile = null;
+    document.getElementById('comp-label').classList.remove('has-file');
+    document.getElementById('comp-text').textContent = '📎 Subí el comprobante de transferencia';
+    document.getElementById('comp-input').value = '';
+  }
+  renderCartSheet();
+};
+
 window.handleComprobante = function(input) {
   const file = input.files[0]; if (!file) return;
   if (file.size > 10 * 1024 * 1024) { showToast('⚠️', 'El archivo no puede superar 10 MB'); return; }
   comprobanteFile = file;
   document.getElementById('comp-label').classList.add('has-file');
   document.getElementById('comp-text').textContent = `✅ ${file.name}`;
+  renderCartSheet();
 };
 
 async function loadTiendaConfig() {
@@ -1091,7 +1161,6 @@ async function loadTiendaConfig() {
       tiendaConfig = snap.data();
       if (tiendaConfig.alias) {
         document.getElementById('alias-value').textContent = tiendaConfig.alias;
-        document.getElementById('checkout-alias').style.display = 'block';
       }
     }
   } catch(e) {}
@@ -1099,6 +1168,46 @@ async function loadTiendaConfig() {
 
 window.sendWA = async function() {
   if (!cart.length) return;
+  const btn = document.getElementById('btn-send-wa');
+  const btnText = document.getElementById('btn-send-text');
+  btn.disabled = true; btnText.textContent = 'Verificando…';
+
+  // Validar stock en tiempo real contra Firestore
+  const stockIssues = [];
+  for (const item of cart) {
+    try {
+      const snap = await getDoc(doc(db, 'productos', item.id));
+      if (snap.exists()) {
+        const stockActual = snap.data().stock;
+        if (stockActual < item.qty) {
+          const prod = allProductos.find(x => x.id === item.id);
+          stockIssues.push({ id: item.id, nombre: prod?.nombre || '', disponible: stockActual });
+        }
+      }
+    } catch(e) {}
+  }
+  if (stockIssues.length) {
+    stockIssues.forEach(issue => {
+      const prod = allProductos.find(x => x.id === issue.id);
+      if (prod) prod.stock = issue.disponible;
+      if (issue.disponible === 0) {
+        cart = cart.filter(x => x.id !== issue.id);
+      } else {
+        const ci = cart.find(x => x.id === issue.id);
+        if (ci) ci.qty = issue.disponible;
+      }
+    });
+    saveCart(); updateCartBadge(); renderCartSheet();
+    btn.disabled = false; btnText.textContent = 'Enviar pedido';
+    const first = stockIssues[0];
+    showToast('⚠️', first.disponible === 0
+      ? `"${first.nombre}" se agotó, lo quitamos del carrito`
+      : `Stock actualizado: "${first.nombre}" solo tiene ${first.disponible} disponible${stockIssues.length > 1 ? ' y más' : ''}`
+    );
+    return;
+  }
+  btnText.textContent = 'Enviando…';
+
   const note = document.getElementById('by-note').value.trim();
   let total = 0;
   const lines = cart.map(item => {
@@ -1106,6 +1215,7 @@ window.sendWA = async function() {
     const s = p.precio * item.qty; total += s;
     return `• ${p.nombre} x${item.qty} = $${s.toLocaleString('es-AR')}`;
   }).filter(Boolean);
+  const totalFinal = selectedPayment === 'transferencia' ? Math.round(total * 0.85) : total;
   const nombre = currentPerfil ? `${currentPerfil.nombre} ${currentPerfil.apellido}` : 'Cliente';
   const tel = currentPerfil?.telefono || '';
   const dir = currentPerfil ? [currentPerfil.direccion, currentPerfil.ciudad, currentPerfil.provincia].filter(Boolean).join(', ') : '';
@@ -1121,6 +1231,7 @@ window.sendWA = async function() {
       comprobanteUrl = await getDownloadURL(snap.ref);
     } catch(e) {
       showToast('⚠️', 'No se pudo subir el comprobante, reintentá');
+      btn.disabled = false; btnText.textContent = 'Enviar pedido';
       return;
     }
   }
@@ -1132,26 +1243,27 @@ window.sendWA = async function() {
     tel ? `*Teléfono:* ${tel}` : '',
     dir.trim().replace(/^,\s*/,'') ? `*Dirección:* ${dir}` : '',
     ``, `*Entrega:* ${entregaTexto}`,
+    `*Pago:* ${selectedPayment === 'transferencia' ? '🏦 Transferencia bancaria' : '💳 Mercado Pago'}`,
     ``, `*Productos:*`, ...lines, ``,
-    `*Total: $${total.toLocaleString('es-AR')}*`,
+    selectedPayment === 'transferencia'
+      ? `*Precio lista: $${total.toLocaleString('es-AR')}*\n*Total con transferencia (15% OFF): $${totalFinal.toLocaleString('es-AR')}*`
+      : `*Total: $${totalFinal.toLocaleString('es-AR')}*`,
     note ? `\n*Nota:* ${note}` : '',
     comprobanteUrl ? `\n*Comprobante:* ${comprobanteUrl}` : ''
   ].filter(x => x !== null && x !== '').join('\n');
 
-  const btn = document.getElementById('btn-send-wa');
-  const btnText = document.getElementById('btn-send-text');
-  btn.disabled = true; btnText.textContent = 'Enviando…';
-
   let pedidoId = null;
-  if (currentUser) {
+  try {
     const pedidoRef = await addDoc(collection(db, 'pedidos'), {
-      usuario_id: currentUser.uid,
+      usuario_id: currentUser?.uid || null,
+      es_invitado: !currentUser,
       cliente_nombre: nombre,
       cliente_email: clienteEmail,
       cliente_telefono: tel,
       cliente_direccion: dir,
       items: lines,
-      total,
+      total: totalFinal,
+      metodo_pago: selectedPayment,
       estado: 'nuevo',
       nota: note,
       entrega: selectedDelivery,
@@ -1160,7 +1272,7 @@ window.sendWA = async function() {
       creado: serverTimestamp()
     });
     pedidoId = pedidoRef.id;
-  }
+  } catch(e) {}
 
   // Limpiar estado de comprobante para el próximo pedido
   comprobanteFile = null;
@@ -1194,6 +1306,17 @@ window.sendWA = async function() {
   } catch(e) {
     window.open(`https://wa.me/5492974359455?text=${encodeURIComponent(msgParts)}`, '_blank');
   }
+}
+
+window.openZoom = function(src) {
+  document.getElementById('zoom-img').src = src;
+  document.getElementById('zoom-ov').classList.add('on');
+  document.body.style.overflow = 'hidden';
+}
+window.closeZoom = function() {
+  document.getElementById('zoom-ov').classList.remove('on');
+  document.getElementById('zoom-img').src = '';
+  document.body.style.overflow = '';
 }
 
 window.showToast = function(ic, msg) {

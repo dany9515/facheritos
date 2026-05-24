@@ -501,7 +501,7 @@ select.finp{cursor:pointer}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy, where, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 import { firebaseConfig } from '/firebase-config.js';
@@ -559,6 +559,35 @@ function showPage(p) {
 function initAdmin() {
   document.getElementById('dash-date').textContent = 'Hoy es ' + new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
   navTo('dashboard');
+  solicitarPermisoNotif();
+  escucharPedidosNuevos();
+}
+
+async function solicitarPermisoNotif() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    await Notification.requestPermission();
+  }
+}
+
+let _pedidosNuevosCount = null;
+function escucharPedidosNuevos() {
+  const q = query(collection(db, 'pedidos'), where('estado', '==', 'nuevo'));
+  onSnapshot(q, snap => {
+    if (_pedidosNuevosCount === null) { _pedidosNuevosCount = snap.size; return; }
+    if (snap.size > _pedidosNuevosCount) {
+      const cantidad = snap.size - _pedidosNuevosCount;
+      if (Notification.permission === 'granted') {
+        new Notification('Facheritos 🛍️', {
+          body: cantidad === 1 ? '¡Nuevo pedido recibido!' : `${cantidad} nuevos pedidos recibidos`,
+          icon: './icon-192.png',
+        });
+      }
+      showToast('🔔', cantidad === 1 ? '¡Nuevo pedido!' : `${cantidad} nuevos pedidos`);
+      updateBadge();
+      if (currentTab === 'pedidos') renderPeds();
+    }
+    _pedidosNuevosCount = snap.size;
+  });
 }
 
 // NAV
