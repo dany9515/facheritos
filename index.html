@@ -731,7 +731,15 @@ window.doRegister = async function() {
       codigo_postal: document.getElementById('rg-cp').value.trim(),
       email, creado: serverTimestamp()
     });
-    currentPerfil = { nombre, apellido };
+    currentPerfil = {
+      nombre, apellido,
+      telefono: document.getElementById('rg-tel').value.trim(),
+      direccion: document.getElementById('rg-dir').value.trim(),
+      ciudad: document.getElementById('rg-ciudad').value.trim(),
+      provincia: document.getElementById('rg-prov').value.trim(),
+      codigo_postal: document.getElementById('rg-cp').value.trim(),
+      email
+    };
     okEl.style.display = 'block';
     showToast('✅', '¡Bienvenido/a!');
     setTimeout(() => goPage('profile'), 1500);
@@ -1100,7 +1108,7 @@ window.sendWA = async function() {
   }).filter(Boolean);
   const nombre = currentPerfil ? `${currentPerfil.nombre} ${currentPerfil.apellido}` : 'Cliente';
   const tel = currentPerfil?.telefono || '';
-  const dir = currentPerfil ? `${currentPerfil.direccion || ''}, ${currentPerfil.ciudad || ''}, ${currentPerfil.provincia || ''}` : '';
+  const dir = currentPerfil ? [currentPerfil.direccion, currentPerfil.ciudad, currentPerfil.provincia].filter(Boolean).join(', ') : '';
   const clienteEmail = currentUser?.email || '';
 
   // Subir comprobante si hay uno seleccionado
