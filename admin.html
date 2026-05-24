@@ -196,6 +196,7 @@ select.finp{cursor:pointer}
 .ped-btn{border:none;border-radius:8px;padding:8px 14px;font-family:'Nunito',sans-serif;font-weight:900;font-size:12px;cursor:pointer}
 .ped-btn-ok{background:#e8f5e9;color:#2e7d32}
 .ped-btn-can{background:#ffebee;color:#c62828}
+.ped-btn-del{background:#f5f5f5;color:#888;border:1.5px solid #e0e0e0}
 
 /* CONFIG */
 .cfg-card{background:#fff;border:2px solid #eee;border-radius:14px;padding:16px;margin-bottom:14px}
@@ -929,7 +930,7 @@ async function renderPeds() {
       const fecha = o.creado?.toDate ? o.creado.toDate().toLocaleString('es-AR') : '—';
       const items = Array.isArray(o.items)?o.items.map(esc).join('<br>'):esc(o.items||'');
       const estadoCls = ESTADOS_VALIDOS.has(o.estado) ? o.estado : 'desconocido';
-      return `<div class="ped-card"><div class="ped-hd"><div class="ped-id">Pedido #${o.id.slice(-6)}</div><span class="ped-st ped-st-${estadoCls}">${esc(o.estado)}</span></div><div class="ped-info"><div class="ped-info-row">📅 ${fecha}</div><div class="ped-info-row">👤 ${esc(o.cliente_nombre||'—')}</div>${o.cliente_telefono?`<div class="ped-info-row">📱 ${esc(o.cliente_telefono)}</div>`:''}</div><div class="ped-items-box">${items}</div><div class="ped-foot"><div class="ped-total">$${Number(o.total).toLocaleString('es-AR')}</div><div class="ped-acts">${o.estado==='nuevo'?`<button class="ped-btn ped-btn-ok" onclick="setOrd('${o.id}','confirmado')">✓ Confirmar</button>`:''}${o.estado!=='cancelado'?`<button class="ped-btn ped-btn-can" onclick="setOrd('${o.id}','cancelado')">✗ Cancelar</button>`:''}</div></div></div>`;
+      return `<div class="ped-card"><div class="ped-hd"><div class="ped-id">Pedido #${o.id.slice(-6)}</div><span class="ped-st ped-st-${estadoCls}">${esc(o.estado)}</span></div><div class="ped-info"><div class="ped-info-row">📅 ${fecha}</div><div class="ped-info-row">👤 ${esc(o.cliente_nombre||'—')}</div>${o.cliente_telefono?`<div class="ped-info-row">📱 ${esc(o.cliente_telefono)}</div>`:''}</div><div class="ped-items-box">${items}</div><div class="ped-foot"><div class="ped-total">$${Number(o.total).toLocaleString('es-AR')}</div><div class="ped-acts">${o.estado==='nuevo'?`<button class="ped-btn ped-btn-ok" onclick="setOrd('${o.id}','confirmado')">✓ Confirmar</button>`:''}${o.estado!=='cancelado'?`<button class="ped-btn ped-btn-can" onclick="setOrd('${o.id}','cancelado')">✗ Cancelar</button>`:''}<button class="ped-btn ped-btn-del" onclick="deleteOrd('${o.id}')">🗑 Eliminar</button></div></div></div>`;
     }).join('');
   } catch(e) { el.innerHTML='<div class="empty-state"><div class="ic">❌</div><p>Error</p></div>'; }
 }
@@ -938,6 +939,15 @@ window.setOrd = async function(id, estado) {
   await updateDoc(doc(db,'pedidos',id), {estado});
   showToast(estado==='confirmado'?'✅':'🗑', estado==='confirmado'?'Pedido confirmado':'Pedido cancelado');
   await renderPeds(); await updateBadge();
+}
+
+window.deleteOrd = async function(id) {
+  if (!confirm('¿Eliminár este pedido definitivamente? No se puede deshacer.')) return;
+  try {
+    await deleteDoc(doc(db,'pedidos',id));
+    showToast('🗑', 'Pedido eliminado');
+    await renderPeds(); await updateBadge();
+  } catch(e) { showToast('❌', 'Error al eliminar'); }
 }
 
 // CONFIG
