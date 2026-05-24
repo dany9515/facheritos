@@ -632,7 +632,7 @@ textarea.finp { resize: none; min-height: 60px; }
           <div class="fld"><label class="flb">Apellido *</label><input class="finp" id="guest-apellido" placeholder="González"></div>
         </div>
         <div class="fld"><label class="flb">Teléfono *</label><input class="finp" id="guest-tel" type="tel" placeholder="2974123456"></div>
-        <div class="fld"><label class="flb">Dirección</label><input class="finp" id="guest-dir" placeholder="Av. San Martín 123, Tartagal"></div>
+        <div class="fld" id="guest-dir-row" style="display:none"><label class="flb" id="guest-dir-label">Dirección *</label><input class="finp" id="guest-dir" placeholder="Av. San Martín 123, Tartagal"></div>
       </div>
 
       <!-- Método de pago -->
@@ -1225,6 +1225,9 @@ function renderCartSheet() {
   // Datos del cliente: mostrar campos manuales solo para invitados
   const guestSection = document.getElementById('guest-info-section');
   if (guestSection) guestSection.style.display = currentUser ? 'none' : 'block';
+  // Dirección: solo obligatoria y visible cuando elige envío a domicilio
+  const guestDirRow = document.getElementById('guest-dir-row');
+  if (guestDirRow) guestDirRow.style.display = selectedDelivery === 'envio' ? 'block' : 'none';
 
   // Mostrar botón MP o botón WA según método de pago
   const mpWrapper = document.getElementById('mp-checkout-wrapper');
@@ -1263,6 +1266,7 @@ window.setDelivery = function(mode) {
   selectedDelivery = mode;
   document.getElementById('opt-retiro').classList.toggle('on', mode === 'retiro');
   document.getElementById('opt-envio').classList.toggle('on', mode === 'envio');
+  renderCartSheet();
 };
 
 window.setPayment = function(method) {
@@ -1343,6 +1347,11 @@ window.sendMP = async function() {
     dir = document.getElementById('guest-dir')?.value.trim() || '';
     if (!gNombre || !gApellido || !tel) {
       showToast('⚠️', 'Completá tu nombre, apellido y teléfono');
+      btn.disabled = false; btn.textContent = 'Pagar con Mercado Pago';
+      return;
+    }
+    if (selectedDelivery === 'envio' && !dir) {
+      showToast('⚠️', 'Ingresá tu dirección para el envío');
       btn.disabled = false; btn.textContent = 'Pagar con Mercado Pago';
       return;
     }
@@ -1477,6 +1486,11 @@ window.sendWA = async function() {
     dir = document.getElementById('guest-dir')?.value.trim() || '';
     if (!gNombre || !gApellido || !tel) {
       showToast('⚠️', 'Completá tu nombre, apellido y teléfono');
+      btn.disabled = false; btnText.textContent = 'Enviar pedido';
+      return;
+    }
+    if (selectedDelivery === 'envio' && !dir) {
+      showToast('⚠️', 'Ingresá tu dirección para el envío');
       btn.disabled = false; btnText.textContent = 'Enviar pedido';
       return;
     }
