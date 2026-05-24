@@ -182,6 +182,11 @@ body { font-family: 'Nunito', sans-serif; background: #fff; color: #111; min-hei
 .bnav-ico { font-size: 20px; line-height: 1; }
 .pad-bnav { padding-bottom: 72px; }
 
+/* ── MERCADO PAGO ── */
+.pay-mp-btn { width:100%; background:#009ee3; color:#fff; border:none; border-radius:14px; padding:16px; font-family:'Nunito',sans-serif; font-size:15px; font-weight:900; cursor:pointer; letter-spacing:.3px; transition:opacity .2s; margin-top:4px; }
+.pay-mp-btn:active { opacity:.85; }
+.pay-mp-btn:disabled { opacity:.6; cursor:wait; }
+
 /* ── FOOTER ── */
 .store-footer { background: #111; color: rgba(255,255,255,.7); text-align: center; padding: 32px 20px 20px; margin-top: 8px; }
 .footer-brand { font-family: 'Permanent Marker', cursive; font-size: 28px; color: #fff; margin-bottom: 4px; }
@@ -650,15 +655,17 @@ textarea.finp { resize: none; min-height: 60px; }
         <span id="btn-send-text">Enviar pedido</span>
       </button>
 
-      <!-- MERCADO PAGO BRICK -->
-      <div id="mp-brick-wrapper" style="display:none">
+      <!-- MERCADO PAGO CHECKOUT PRO -->
+      <div id="mp-checkout-wrapper" style="display:none">
         <div id="mp-guest-email-row" style="display:none">
           <div class="fld" style="margin:8px 0 12px">
             <label class="flb">Tu email (para recibir el comprobante)</label>
             <input class="finp" type="email" id="mp-email-input" placeholder="tucorreo@gmail.com" autocomplete="email">
           </div>
         </div>
-        <div id="mp-brick-container"></div>
+        <button class="pay-mp-btn" id="btn-send-mp" onclick="sendMP()">
+          Pagar con Mercado Pago
+        </button>
       </div>
     </div>
   </div>
@@ -683,7 +690,6 @@ textarea.finp { resize: none; min-height: 60px; }
 
 <div class="toast" id="toast"><span id="t-ic"></span> <span id="t-msg"></span></div>
 
-<script src="https://sdk.mercadopago.com/js/v2"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -711,10 +717,6 @@ let selectedDelivery = 'retiro';
 let selectedPayment = 'transferencia';
 let comprobanteFile = null;
 let currentPerfil = null;
-let mpInstance = null;
-let mpBrick = null;
-let lastMPTotal = 0;
-const MP_PK = 'TEST-4242cc54-453f-4c51-b90c-d4a263f11bb8';
 // ⚠️ Producción: mover el Access Token a un Cloud Function para no exponerlo en el cliente
 const MP_AT = 'TEST-4562179434000493-052414-de318dac1e62575d0d4a421a3925b868-51517100';
 let allProductos = [];
@@ -1166,16 +1168,17 @@ function renderCartSheet() {
     totalEl.style.color = '';
     document.querySelector('.cart-ttl-lbl').textContent = 'Total';
   }
-  // Mostrar brick de MP o botón de WA según método de pago
-  const mpWrapper = document.getElementById('mp-brick-wrapper');
+  // Mostrar botón MP o botón WA según método de pago
+  const mpWrapper = document.getElementById('mp-checkout-wrapper');
   const waBtn = document.getElementById('btn-send-wa');
   if (selectedPayment === 'mp') {
     if (waBtn) waBtn.style.display = 'none';
-    if (mpWrapper) mpWrapper.style.display = 'block';
-    if (total !== lastMPTotal) { lastMPTotal = total; mountMPBrick(total); }
+    if (mpWrapper) {
+      mpWrapper.style.display = 'block';
+      const guestRow = document.getElementById('mp-guest-email-row');
+      if (guestRow) guestRow.style.display = currentUser ? 'none' : 'block';
+    }
   } else {
-    if (mpBrick) { mpBrick.unmount().catch(() => {}); mpBrick = null; }
-    lastMPTotal = 0;
     if (waBtn) waBtn.style.display = '';
     if (mpWrapper) mpWrapper.style.display = 'none';
   }
@@ -1232,36 +1235,12 @@ async function loadTiendaConfig() {
   } catch(e) {}
 }
 
-// ─── MERCADO PAGO ───
-async function mountMPBrick(amount) {
-  if (mpBrick) {
-    try { await mpBrick.unmount(); } catch(_) {}
-    mpBrick = null;
-  }
-  document.getElementById('mp-brick-container').innerHTML = '';
-  if (!amount || amount <= 0 || typeof MercadoPago === 'undefined') return;
-  document.getElementById('mp-guest-email-row').style.display = currentUser ? 'none' : 'block';
-  if (!mpInstance) mpInstance = new MercadoPago(MP_PK, { locale: 'es-AR' });
-  try {
-    mpBrick = await mpInstance.bricks().create('cardPayment', 'mp-brick-container', {
-      initialization: { amount },
-      customization: {
-        paymentMethods: { maxInstallments: 6 },
-        visual: { hideFormTitle: true, style: { theme: 'default' } },
-      },
-      callbacks: {
-        onReady: () => {},
-        onSubmit: (data) => processMPPayment(data),
-        onError: (e) => console.error('MPBrick:', e),
-      },
-    });
-  } catch(e) {
-    console.error('mountMPBrick:', e);
-    showToast('❌', 'Error al cargar el formulario de pago');
-  }
-}
+// ─── MERCADO PAGO CHECKOUT PRO ───
+window.sendMP = async function() {
+  if (!cart.length) return;
+  const btn = document.getElementById('btn-send-mp');
+  btn.disabled = true; btn.textContent = 'Verificando…';
 
-async function processMPPayment(formData) {
   // Validar stock en tiempo real
   const stockIssues = [];
   for (const item of cart) {
@@ -1286,115 +1265,75 @@ async function processMPPayment(formData) {
     saveCart(); updateCartBadge(); renderCartSheet();
     const f = stockIssues[0];
     showToast('⚠️', f.disponible === 0 ? `"${f.nombre}" se agotó` : `Stock actualizado para "${f.nombre}"`);
-    throw new Error('stock');
-  }
-
-  // Email del pagador (obligatorio para MP)
-  const payerEmail = currentUser?.email || document.getElementById('mp-email-input')?.value?.trim();
-  if (!payerEmail) {
-    showToast('⚠️', 'Ingresá tu email para continuar');
-    throw new Error('no-email');
-  }
-
-  // Crear pago — ⚠️ Producción: mover a Cloud Function
-  const res = await fetch('https://api.mercadopago.com/v1/payments', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${MP_AT}`,
-      'X-Idempotency-Key': `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-    },
-    body: JSON.stringify({
-      token:              formData.token,
-      issuer_id:          formData.issuer_id,
-      payment_method_id:  formData.payment_method_id,
-      transaction_amount: formData.transaction_amount,
-      installments:       formData.installments,
-      description:        'Compra en Facheritos',
-      payer: {
-        email:          payerEmail,
-        identification: formData.payer?.identification,
-      },
-    }),
-  });
-  const payment = await res.json();
-
-  if (payment.status === 'approved' || payment.status === 'in_process') {
-    const note = document.getElementById('by-note').value.trim();
-    let total = 0;
-    const lines = cart.map(item => {
-      const p = allProductos.find(x => x.id === item.id); if (!p) return '';
-      const s = p.precio * item.qty; total += s;
-      return `• ${p.nombre} x${item.qty} = $${s.toLocaleString('es-AR')}`;
-    }).filter(Boolean);
-    const nombre = currentPerfil ? `${currentPerfil.nombre} ${currentPerfil.apellido}` : 'Cliente';
-    const tel = currentPerfil?.telefono || '';
-    const dir = currentPerfil ? [currentPerfil.direccion, currentPerfil.ciudad, currentPerfil.provincia].filter(Boolean).join(', ') : '';
-
-    let pedidoId = null;
-    try {
-      const pedidoRef = await addDoc(collection(db, 'pedidos'), {
-        usuario_id:       currentUser?.uid || null,
-        es_invitado:      !currentUser,
-        cliente_nombre:   nombre,
-        cliente_email:    payerEmail,
-        cliente_telefono: tel,
-        cliente_direccion: dir,
-        items:            lines,
-        total,
-        metodo_pago:      'mp',
-        mp_payment_id:    String(payment.id),
-        mp_status:        payment.status,
-        mp_status_detail: payment.status_detail,
-        estado:           'nuevo',
-        nota:             note,
-        entrega:          selectedDelivery,
-        seccion:          currentSeccion,
-        creado:           serverTimestamp(),
-      });
-      pedidoId = pedidoRef.id;
-    } catch(_) {}
-
-    try {
-      const cfg = tiendaConfig;
-      const ejs = cfg.emailjs || {};
-      if (ejs.public_key && ejs.service_id && ejs.template_id && payerEmail) {
-        emailjs.init({ publicKey: ejs.public_key });
-        await emailjs.send(ejs.service_id, ejs.template_id, {
-          to_email:      payerEmail,
-          to_name:       nombre.split(' ')[0],
-          items_lista:   lines.join('\n'),
-          total_texto:   `$${total.toLocaleString('es-AR')}`,
-          entrega_texto: selectedDelivery === 'envio' ? '🚚 Envío a domicilio' : '🏪 Retiro en local',
-          nota_texto:    note || 'Sin notas adicionales',
-          tienda_nombre: cfg.nombre || 'Facheritos',
-          pedido_id:     pedidoId || '—',
-        });
-      }
-    } catch(_) {}
-
-    cart = []; saveCart(); updateCartBadge(); closeOv('ov-cart');
-    showToast('✅', payment.status === 'approved' ? '¡Pago aprobado! Pedido confirmado 🎉' : '¡Pago en proceso! Te confirmamos pronto');
+    btn.disabled = false; btn.textContent = 'Pagar con Mercado Pago';
     return;
   }
 
-  // Pago rechazado — mensajes amigables
-  const REJECTION = {
-    cc_rejected_bad_filled_card_number:   'Número de tarjeta incorrecto',
-    cc_rejected_bad_filled_date:          'Fecha de vencimiento incorrecta',
-    cc_rejected_bad_filled_security_code: 'Código de seguridad incorrecto',
-    cc_rejected_bad_filled_other:         'Datos de tarjeta incorrectos',
-    cc_rejected_blacklist:                'Tarjeta rechazada',
-    cc_rejected_call_for_authorize:       'Contactá tu banco para autorizar',
-    cc_rejected_card_disabled:            'Tarjeta deshabilitada',
-    cc_rejected_insufficient_amount:      'Saldo insuficiente',
-    cc_rejected_max_attempts:             'Límite de intentos alcanzado',
-    cc_rejected_other_reason:             'Pago rechazado por el banco',
-  };
-  const msg = REJECTION[payment.status_detail] || `Pago rechazado (${payment.status_detail || payment.status})`;
-  showToast('❌', msg);
-  throw new Error(msg);
-}
+  // Email obligatorio para MP
+  const payerEmail = currentUser?.email || document.getElementById('mp-email-input')?.value?.trim();
+  if (!payerEmail) {
+    showToast('⚠️', 'Ingresá tu email para continuar');
+    btn.disabled = false; btn.textContent = 'Pagar con Mercado Pago';
+    return;
+  }
+
+  btn.textContent = 'Preparando pago…';
+
+  // Armar datos del pedido
+  let total = 0;
+  const lines = cart.map(item => {
+    const p = allProductos.find(x => x.id === item.id); if (!p) return '';
+    const s = p.precio * item.qty; total += s;
+    return `• ${p.nombre} x${item.qty} = $${s.toLocaleString('es-AR')}`;
+  }).filter(Boolean);
+  const nombre = currentPerfil ? `${currentPerfil.nombre} ${currentPerfil.apellido}` : 'Cliente';
+  const tel    = currentPerfil?.telefono || '';
+  const dir    = currentPerfil ? [currentPerfil.direccion, currentPerfil.ciudad, currentPerfil.provincia].filter(Boolean).join(', ') : '';
+  const note   = document.getElementById('by-note').value.trim();
+  const baseUrl = location.href.split('?')[0];
+
+  try {
+    // Crear preferencia — ⚠️ Producción: mover a Cloud Function
+    const res = await fetch('https://api.mercadopago.com/checkout/preferences', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${MP_AT}` },
+      body: JSON.stringify({
+        items: [{ title: 'Compra en Facheritos', quantity: 1, currency_id: 'ARS', unit_price: total }],
+        payer: { email: payerEmail },
+        back_urls: { success: baseUrl, failure: baseUrl, pending: baseUrl },
+        auto_return: 'approved',
+        statement_descriptor: 'FACHERITOS',
+      }),
+    });
+    const pref = await res.json();
+    if (!pref.id) throw new Error('Sin preferencia');
+
+    // Guardar pedido pendiente en localStorage para procesarlo al volver
+    localStorage.setItem('fach_mp_pending', JSON.stringify({
+      usuario_id:        currentUser?.uid || null,
+      es_invitado:       !currentUser,
+      cliente_nombre:    nombre,
+      cliente_email:     payerEmail,
+      cliente_telefono:  tel,
+      cliente_direccion: dir,
+      items:             lines,
+      total,
+      metodo_pago:       'mp',
+      mp_preference_id:  pref.id,
+      estado:            'nuevo',
+      nota:              note,
+      entrega:           selectedDelivery,
+      seccion:           currentSeccion,
+    }));
+
+    // Redirigir: sandbox_init_point en TEST, init_point en producción
+    location.href = pref.sandbox_init_point || pref.init_point;
+  } catch(e) {
+    console.error('MP preference:', e);
+    showToast('❌', 'No se pudo iniciar el pago. Intentá de nuevo.');
+    btn.disabled = false; btn.textContent = 'Pagar con Mercado Pago';
+  }
+};
 
 window.sendWA = async function() {
   if (!cart.length) return;
@@ -1564,6 +1503,53 @@ async function init() {
     updateHero(currentSeccion);
   }
   await Promise.all([loadAndRender(), loadTiendaConfig()]);
+
+  // Procesar retorno desde Mercado Pago
+  const params = new URLSearchParams(location.search);
+  const colStatus = params.get('collection_status') || params.get('status');
+  if (colStatus) {
+    history.replaceState({}, '', location.pathname);
+    const pendingRaw = localStorage.getItem('fach_mp_pending');
+    localStorage.removeItem('fach_mp_pending');
+
+    if (colStatus === 'approved' && pendingRaw) {
+      const order = JSON.parse(pendingRaw);
+      const paymentId = params.get('payment_id') || params.get('collection_id');
+      let pedidoId = null;
+      try {
+        const ref2 = await addDoc(collection(db, 'pedidos'), {
+          ...order,
+          mp_payment_id:        paymentId || null,
+          mp_collection_status: colStatus,
+          creado:               serverTimestamp(),
+        });
+        pedidoId = ref2.id;
+      } catch(_) {}
+      cart = []; saveCart(); updateCartBadge();
+      showToast('✅', '¡Pago aprobado! Tu pedido fue confirmado 🎉');
+      try {
+        const cfg = tiendaConfig;
+        const ejs = cfg.emailjs || {};
+        if (ejs.public_key && ejs.service_id && ejs.template_id && order.cliente_email) {
+          emailjs.init({ publicKey: ejs.public_key });
+          await emailjs.send(ejs.service_id, ejs.template_id, {
+            to_email:      order.cliente_email,
+            to_name:       order.cliente_nombre?.split(' ')[0] || 'Cliente',
+            items_lista:   order.items.join('\n'),
+            total_texto:   `$${Number(order.total).toLocaleString('es-AR')}`,
+            entrega_texto: order.entrega === 'envio' ? '🚚 Envío a domicilio' : '🏪 Retiro en local',
+            nota_texto:    order.nota || 'Sin notas adicionales',
+            tienda_nombre: cfg.nombre || 'Facheritos',
+            pedido_id:     pedidoId || '—',
+          });
+        }
+      } catch(_) {}
+    } else if (colStatus === 'rejected') {
+      showToast('❌', 'El pago fue rechazado. Podés intentar de nuevo.');
+    } else if (colStatus === 'pending' || colStatus === 'in_process') {
+      showToast('⏳', 'Pago pendiente. Te avisamos cuando se confirme.');
+    }
+  }
 }
 init();
 </script>
