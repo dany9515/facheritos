@@ -731,7 +731,7 @@ textarea.finp { resize: none; min-height: 60px; }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 import emailjs from 'https://esm.sh/@emailjs/browser@4';
@@ -865,9 +865,12 @@ window.doRegister = async function() {
       codigo_postal: document.getElementById('rg-cp').value.trim(),
       email
     };
+    // Enviar email de verificación (continueUrl devuelve al usuario a la tienda)
+    try { await sendEmailVerification(user, { url: location.origin }); } catch(_) {}
+    okEl.textContent = '✅ ¡Cuenta creada! Revisá tu email para verificarla.';
     okEl.style.display = 'block';
-    showToast('✅', '¡Bienvenido/a!');
-    setTimeout(() => goPage('profile'), 1500);
+    showToast('✅', '¡Bienvenido/a! Verificá tu email');
+    setTimeout(() => goPage('profile'), 2000);
   } catch(e) {
     errEl.textContent = e.code === 'auth/email-already-in-use' ? '⚠️ Email ya registrado' : '⚠️ Error al crear la cuenta';
     errEl.style.display = 'block';
@@ -877,8 +880,13 @@ window.doRegister = async function() {
 window.resetPass = async function() {
   const email = document.getElementById('li-email').value.trim();
   if (!email) { showToast('⚠️', 'Ingresá tu email primero'); return; }
-  try { await sendPasswordResetEmail(auth, email); showToast('✅', 'Email enviado'); }
-  catch(e) { showToast('⚠️', 'Email no encontrado'); }
+  try { await sendPasswordResetEmail(auth, email); showToast('✅', 'Revisá tu email para resetear la contraseña'); }
+  catch(e) {
+    const msg = e.code === 'auth/too-many-requests' ? 'Demasiados intentos, esperá unos minutos'
+              : e.code === 'auth/invalid-email'     ? 'Email inválido'
+              : 'No encontramos una cuenta con ese email';
+    showToast('⚠️', msg);
+  }
 }
 
 window.doLogout = async function() { await signOut(auth); goPage('store'); }
