@@ -641,7 +641,7 @@ window.setProdFilt = function(f, el) {
   renderProds();
 }
 
-async function renderProds() {
+window.renderProds = async function renderProds() {
   const el = document.getElementById('prod-list');
   el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
   try {
@@ -802,6 +802,19 @@ window.cancelCrop = function() {
   if (cropperInst) { cropperInst.destroy(); cropperInst = null; }
   document.getElementById('cropper-modal').classList.remove('on');
   document.body.style.overflow='';
+}
+
+window.skipCrop = function() {
+  if (cropperInst) { cropperInst.destroy(); cropperInst = null; }
+  document.getElementById('cropper-modal').classList.remove('on');
+  document.body.style.overflow = '';
+  if (!originalFileDataUrl) return;
+  fetch(originalFileDataUrl)
+    .then(r => r.blob())
+    .then(blob => {
+      fotosArray.push({ dataUrl: originalFileDataUrl, blob, existing: false });
+      updateFotosGrid();
+    });
 }
 
 // GUARDAR PRODUCTO
