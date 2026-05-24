@@ -659,6 +659,12 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const ADMIN_EMAIL = 'admin@facheritos.com';
 
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+const ESTADOS_VALIDOS = new Set(['nuevo','confirmado','cancelado','enviado','entregado']);
+
 let currentUser = null;
 let tiendaConfig = {};
 let selectedDelivery = 'retiro';
@@ -844,7 +850,8 @@ window.loadMisPedidos = async function() {
     el.innerHTML = snap.docs.map(d => {
       const p = d.data();
       const fecha = p.creado?.toDate ? p.creado.toDate().toLocaleString('es-AR') : '—';
-      return `<div class="ped-card"><div class="ped-hd"><div class="ped-id">Pedido #${d.id.slice(-6)}</div><span class="st st-${p.estado}">${p.estado}</span></div><div class="ped-fecha">📅 ${fecha}</div><div class="ped-items-box">${Array.isArray(p.items) ? p.items.join('<br>') : p.items}</div><div class="ped-total">$${Number(p.total).toLocaleString('es-AR')}</div></div>`;
+      const estadoCls = ESTADOS_VALIDOS.has(p.estado) ? p.estado : 'desconocido';
+      return `<div class="ped-card"><div class="ped-hd"><div class="ped-id">Pedido #${d.id.slice(-6)}</div><span class="st st-${estadoCls}">${esc(p.estado)}</span></div><div class="ped-fecha">📅 ${fecha}</div><div class="ped-items-box">${Array.isArray(p.items) ? p.items.map(esc).join('<br>') : esc(p.items)}</div><div class="ped-total">$${Number(p.total).toLocaleString('es-AR')}</div></div>`;
     }).join('');
   } catch(e) { el.innerHTML = '<div style="text-align:center;padding:48px;color:#bbb"><p style="font-weight:700">Error al cargar</p></div>'; }
 }
@@ -868,11 +875,11 @@ async function loadAndRender() {
 function buildSidebarFilters() {
   const cats = [...new Set(allProductos.map(p => p.categoria).filter(Boolean))].sort();
   document.getElementById('cat-filter-opts').innerHTML = cats.map(c =>
-    `<div class="filter-opt ${selectedCats.has(c) ? 'on' : ''}" onclick="toggleCat('${c}')"><div class="filter-check"></div><span class="filter-opt-label">${c}</span></div>`
+    `<div class="filter-opt ${selectedCats.has(c) ? 'on' : ''}" onclick="toggleCat(${JSON.stringify(c)})"><div class="filter-check"></div><span class="filter-opt-label">${esc(c)}</span></div>`
   ).join('');
   const talles = [...new Set(allProductos.flatMap(p => (p.tags || '').split(',').map(t => t.trim())).filter(Boolean))];
   document.getElementById('talle-filter-opts').innerHTML = talles.map(t =>
-    `<div class="filter-opt ${selectedTalles.has(t) ? 'on' : ''}" onclick="toggleTalle('${t}')"><div class="filter-check"></div><span class="filter-opt-label">${t}</span></div>`
+    `<div class="filter-opt ${selectedTalles.has(t) ? 'on' : ''}" onclick="toggleTalle(${JSON.stringify(t)})"><div class="filter-check"></div><span class="filter-opt-label">${esc(t)}</span></div>`
   ).join('');
 }
 
@@ -939,13 +946,13 @@ function renderGrid(prods) {
   }
   const genLabels = { nino: 'Niño', nina: 'Niña', unisex: 'Unisex' };
   g.innerHTML = prods.map(p => {
-    const imgHtml = p.foto_url ? `<img src="${p.foto_url}" alt="${p.nombre}" loading="lazy">` : `<span class="emoji">${p.emoji || '👶'}</span>`;
+    const imgHtml = p.foto_url ? `<img src="${p.foto_url}" alt="${esc(p.nombre)}" loading="lazy">` : `<span class="emoji">${p.emoji || '👶'}</span>`;
     const genBadge = p.genero ? `<span class="prod-card-badge ${p.genero}">${genLabels[p.genero] || ''}</span>` : '';
     return `<div class="prod-card" onclick="openDet('${p.id}')">
       <div class="prod-card-img">${imgHtml}${genBadge}${p.stock === 0 ? '<span class="prod-card-out">Sin stock</span>' : ''}</div>
       <div class="prod-card-body">
-        <div class="prod-card-cat">${p.categoria || ''}</div>
-        <div class="prod-card-name">${p.nombre}</div>
+        <div class="prod-card-cat">${esc(p.categoria || '')}</div>
+        <div class="prod-card-name">${esc(p.nombre)}</div>
         <div class="prod-card-prices">
           <span class="prod-card-price-old">$${Number(p.precio).toLocaleString('es-AR')}</span>
           <span class="prod-card-price-new">$${Number(Math.round(p.precio * 0.85)).toLocaleString('es-AR')} <span class="prod-card-discount">-15%</span></span>
@@ -965,10 +972,10 @@ window.openMobileFilter = function(type) {
   let content = '';
   if (type === 'cat') {
     const cats = [...new Set(allProductos.map(p => p.categoria).filter(Boolean))].sort();
-    content = `<div style="display:flex;flex-direction:column;gap:8px">${cats.map(c => `<div class="filter-opt ${selectedCats.has(c) ? 'on' : ''}" onclick="toggleCat('${c}');renderMobileFilter('${type}')"><div class="filter-check"></div><span class="filter-opt-label">${c}</span></div>`).join('')}</div>`;
+    content = `<div style="display:flex;flex-direction:column;gap:8px">${cats.map(c => `<div class="filter-opt ${selectedCats.has(c) ? 'on' : ''}" onclick="toggleCat(${JSON.stringify(c)});renderMobileFilter(${JSON.stringify(type)})"><div class="filter-check"></div><span class="filter-opt-label">${esc(c)}</span></div>`).join('')}</div>`;
   } else if (type === 'talle') {
     const talles = [...new Set(allProductos.flatMap(p => (p.tags || '').split(',').map(t => t.trim())).filter(Boolean))];
-    content = `<div style="display:flex;flex-wrap:wrap;gap:8px">${talles.map(t => `<div onclick="toggleTalle('${t}');renderMobileFilter('${type}')" style="border:2px solid ${selectedTalles.has(t) ? '#111' : '#e0e0e0'};background:${selectedTalles.has(t) ? '#111' : '#fff'};color:${selectedTalles.has(t) ? '#fff' : '#555'};border-radius:8px;padding:8px 14px;font-size:13px;font-weight:800;cursor:pointer">${t}</div>`).join('')}</div>`;
+    content = `<div style="display:flex;flex-wrap:wrap;gap:8px">${talles.map(t => `<div onclick="toggleTalle(${JSON.stringify(t)});renderMobileFilter(${JSON.stringify(type)})" style="border:2px solid ${selectedTalles.has(t) ? '#111' : '#e0e0e0'};background:${selectedTalles.has(t) ? '#111' : '#fff'};color:${selectedTalles.has(t) ? '#fff' : '#555'};border-radius:8px;padding:8px 14px;font-size:13px;font-weight:800;cursor:pointer">${esc(t)}</div>`).join('')}</div>`;
   } else {
     content = `<div style="display:flex;gap:10px;align-items:center"><input type="number" class="price-inp" placeholder="Mínimo" inputmode="numeric" value="${document.getElementById('price-min')?.value||''}" oninput="document.getElementById('price-min').value=this.value;applyFilters()"><span style="color:#bbb;font-weight:700">—</span><input type="number" class="price-inp" placeholder="Máximo" inputmode="numeric" value="${document.getElementById('price-max')?.value||''}" oninput="document.getElementById('price-max').value=this.value;applyFilters()"></div>`;
   }
@@ -1001,9 +1008,9 @@ window.openDet = function(id) {
   // Armar slides - usar fotos[] si hay múltiples, sino foto_url
   let slides = '';
   if (p.fotos && p.fotos.length > 0) {
-    slides = p.fotos.map(f => `<div class="swiper-slide"><img src="${f.url}" alt="${p.nombre}" loading="lazy" onclick="openZoom('${f.url}')" style="cursor:zoom-in"></div>`).join('');
+    slides = p.fotos.map(f => `<div class="swiper-slide"><img src="${f.url}" alt="${esc(p.nombre)}" loading="lazy" onclick="openZoom(${JSON.stringify(f.url)})" style="cursor:zoom-in"></div>`).join('');
   } else if (p.foto_url) {
-    slides = `<div class="swiper-slide"><img src="${p.foto_url}" alt="${p.nombre}" onclick="openZoom('${p.foto_url}')" style="cursor:zoom-in"></div>`;
+    slides = `<div class="swiper-slide"><img src="${p.foto_url}" alt="${esc(p.nombre)}" onclick="openZoom(${JSON.stringify(p.foto_url)})" style="cursor:zoom-in"></div>`;
   } else {
     slides = `<div class="swiper-slide"><span class="emoji">${p.emoji || '👶'}</span></div>`;
   }
@@ -1015,14 +1022,14 @@ window.openDet = function(id) {
       ${showPagination ? '<div class="swiper-pagination"></div>' : ''}
     </div>
     <div class="det-badges">
-      <span class="det-badge det-badge-cat">${p.categoria}</span>
+      <span class="det-badge det-badge-cat">${esc(p.categoria)}</span>
       ${p.genero ? `<span class="det-badge det-badge-gen ${p.genero}">${genLabels[p.genero] || ''}</span>` : ''}
     </div>
-    <div class="det-name">${p.nombre}</div>
+    <div class="det-name">${esc(p.nombre)}</div>
     <div class="det-price">$${Number(p.precio).toLocaleString('es-AR')}</div>
     <div class="det-price-transfer"><i class="fa-solid fa-building-columns"></i> $${Number(precioTransfer).toLocaleString('es-AR')} pagando con transferencia (15% OFF)</div>
-    ${p.descripcion ? `<div class="det-desc">${p.descripcion}</div>` : ''}
-    ${tags.length ? `<div class="det-tags">${tags.map(t => `<span class="det-tag">${t.trim()}</span>`).join('')}</div>` : ''}
+    ${p.descripcion ? `<div class="det-desc">${esc(p.descripcion)}</div>` : ''}
+    ${tags.length ? `<div class="det-tags">${tags.map(t => `<span class="det-tag">${esc(t.trim())}</span>`).join('')}</div>` : ''}
     <span class="det-stock ${p.stock > 0 ? 'ok' : 'out'}">${p.stock > 0 ? `✓ En stock (${p.stock} u.)` : '✗ Sin stock'}</span>
     <div class="pay-methods">
       <div class="pay-methods-ttl">Medios de pago</div>
@@ -1091,7 +1098,7 @@ function renderCartSheet() {
     const p = allProductos.find(x => x.id === item.id); if (!p) return '';
     total += p.precio * item.qty;
     const imgHtml = p.foto_url ? `<img src="${p.foto_url}">` : p.emoji || '👶';
-    return `<div class="ci"><div class="ci-img">${imgHtml}</div><div class="ci-inf"><div class="ci-name">${p.nombre}</div><div class="ci-price">$${Number(p.precio).toLocaleString('es-AR')}</div><div class="qty-row"><button class="q-btn" onclick="chgQty('${p.id}',-1)">−</button><span class="q-n">${item.qty}</span><button class="q-btn" onclick="chgQty('${p.id}',1)">+</button></div></div><button class="ci-rm" onclick="rmCart('${p.id}')"><i class="fa-solid fa-trash"></i></button></div>`;
+    return `<div class="ci"><div class="ci-img">${imgHtml}</div><div class="ci-inf"><div class="ci-name">${esc(p.nombre)}</div><div class="ci-price">$${Number(p.precio).toLocaleString('es-AR')}</div><div class="qty-row"><button class="q-btn" onclick="chgQty('${p.id}',-1)">−</button><span class="q-n">${item.qty}</span><button class="q-btn" onclick="chgQty('${p.id}',1)">+</button></div></div><button class="ci-rm" onclick="rmCart('${p.id}')"><i class="fa-solid fa-trash"></i></button></div>`;
   }).join('');
   const isTransfer = selectedPayment === 'transferencia';
   const totalMostrar = isTransfer ? Math.round(total * 0.85) : total;

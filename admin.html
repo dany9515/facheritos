@@ -511,6 +511,12 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const ADMIN = 'admin@facheritos.com';
 
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+const ESTADOS_VALIDOS = new Set(['nuevo','confirmado','cancelado','enviado','entregado']);
+
 // STATE
 let editId = null;
 let fotosArray = []; // {dataUrl, blob}
@@ -630,12 +636,13 @@ async function renderDashboard() {
     dashOrds.innerHTML = !last5.length ? '<div class="empty-state" style="padding:24px"><div class="ic">📦</div><p>Sin pedidos aún</p></div>' :
       last5.map(o => {
         const fecha = o.creado?.toDate ? o.creado.toDate().toLocaleDateString('es-AR') : '—';
-        return `<div class="mini-row"><div class="mini-av">🧾</div><div class="mini-info"><div class="mini-name">${o.cliente_nombre||'Cliente'}</div><div class="mini-sub">${fecha}</div></div><div class="mini-right"><div class="mini-val">$${Number(o.total).toLocaleString('es-AR')}</div><span class="ped-st ped-st-${o.estado}">${o.estado}</span></div></div>`;
+        const estadoCls = ESTADOS_VALIDOS.has(o.estado) ? o.estado : 'desconocido';
+        return `<div class="mini-row"><div class="mini-av">🧾</div><div class="mini-info"><div class="mini-name">${esc(o.cliente_nombre||'Cliente')}</div><div class="mini-sub">${fecha}</div></div><div class="mini-right"><div class="mini-val">$${Number(o.total).toLocaleString('es-AR')}</div><span class="ped-st ped-st-${estadoCls}">${esc(o.estado)}</span></div></div>`;
       }).join('');
     const dashStock = document.getElementById('dash-stock');
     const bajos = prods.filter(p=>p.stock<=5);
     dashStock.innerHTML = !bajos.length ? '<div style="padding:16px;text-align:center;color:#bbb;font-size:13px;font-weight:700">✅ Todo el stock está bien</div>' :
-      bajos.map(p => `<div class="mini-row"><div class="mini-av">${p.foto_url?`<img src="${p.foto_url}">`:(p.emoji||'👶')}</div><div class="mini-info"><div class="mini-name">${p.nombre}</div><div class="mini-sub">${p.categoria}</div></div><span class="stk ${p.stock===0?'stk-out':'stk-low'}">${p.stock===0?'Sin stock':p.stock+' u.'}</span></div>`).join('');
+      bajos.map(p => `<div class="mini-row"><div class="mini-av">${p.foto_url?`<img src="${p.foto_url}">`:(p.emoji||'👶')}</div><div class="mini-info"><div class="mini-name">${esc(p.nombre)}</div><div class="mini-sub">${esc(p.categoria)}</div></div><span class="stk ${p.stock===0?'stk-out':'stk-low'}">${p.stock===0?'Sin stock':p.stock+' u.'}</span></div>`).join('');
   } catch(e) {}
 }
 
@@ -662,7 +669,7 @@ window.renderProds = async function renderProds() {
     el.innerHTML = prods.map(p => {
       const [cls,lbl] = p.stock===0?['stk-out','Sin stock']:p.stock<=5?['stk-low',`⚠ ${p.stock} u.`]:['stk-ok',`${p.stock} u.`];
       const sec = p.seccion==='teens'?'👦':'👶';
-      return `<div class="prod-item"><div class="prod-item-img">${p.foto_url?`<img src="${p.foto_url}">`:(p.emoji||'👶')}</div><div class="prod-item-body"><div class="prod-item-cat">${sec} ${p.categoria||''}</div><div class="prod-item-name">${p.nombre}</div><div class="prod-item-price">$${Number(p.precio).toLocaleString('es-AR')}</div><div class="prod-item-foot"><span class="stk ${cls}">${lbl}</span><div class="prod-acts"><button class="btn-sec btn-sm" onclick="openForm('${p.id}')">✏ Editar</button><button class="btn-del btn-sm" onclick="confirmDel('${p.id}','${p.nombre.replace(/'/g,"\\'")}','${p.foto_path||''}')">🗑</button></div></div></div></div>`;
+      return `<div class="prod-item"><div class="prod-item-img">${p.foto_url?`<img src="${p.foto_url}">`:(p.emoji||'👶')}</div><div class="prod-item-body"><div class="prod-item-cat">${sec} ${esc(p.categoria||'')}</div><div class="prod-item-name">${esc(p.nombre)}</div><div class="prod-item-price">$${Number(p.precio).toLocaleString('es-AR')}</div><div class="prod-item-foot"><span class="stk ${cls}">${lbl}</span><div class="prod-acts"><button class="btn-sec btn-sm" onclick="openForm('${p.id}')">✏ Editar</button><button class="btn-del btn-sm" onclick="confirmDel('${p.id}',${JSON.stringify(p.nombre)},${JSON.stringify(p.foto_path||'')})">🗑</button></div></div></div></div>`;
     }).join('');
   } catch(e) { el.innerHTML='<div class="empty-state"><div class="ic">❌</div><p>Error al cargar</p></div>'; }
 }
@@ -906,8 +913,9 @@ async function renderPeds() {
     if (!peds.length) { el.innerHTML='<div class="empty-state"><div class="ic">📦</div><p>Sin pedidos</p></div>'; return; }
     el.innerHTML = peds.map(o => {
       const fecha = o.creado?.toDate ? o.creado.toDate().toLocaleString('es-AR') : '—';
-      const items = Array.isArray(o.items)?o.items.join('<br>'):o.items||'';
-      return `<div class="ped-card"><div class="ped-hd"><div class="ped-id">Pedido #${o.id.slice(-6)}</div><span class="ped-st ped-st-${o.estado}">${o.estado}</span></div><div class="ped-info"><div class="ped-info-row">📅 ${fecha}</div><div class="ped-info-row">👤 ${o.cliente_nombre||'—'}</div>${o.cliente_telefono?`<div class="ped-info-row">📱 ${o.cliente_telefono}</div>`:''}</div><div class="ped-items-box">${items}</div><div class="ped-foot"><div class="ped-total">$${Number(o.total).toLocaleString('es-AR')}</div><div class="ped-acts">${o.estado==='nuevo'?`<button class="ped-btn ped-btn-ok" onclick="setOrd('${o.id}','confirmado')">✓ Confirmar</button>`:''}${o.estado!=='cancelado'?`<button class="ped-btn ped-btn-can" onclick="setOrd('${o.id}','cancelado')">✗ Cancelar</button>`:''}</div></div></div>`;
+      const items = Array.isArray(o.items)?o.items.map(esc).join('<br>'):esc(o.items||'');
+      const estadoCls = ESTADOS_VALIDOS.has(o.estado) ? o.estado : 'desconocido';
+      return `<div class="ped-card"><div class="ped-hd"><div class="ped-id">Pedido #${o.id.slice(-6)}</div><span class="ped-st ped-st-${estadoCls}">${esc(o.estado)}</span></div><div class="ped-info"><div class="ped-info-row">📅 ${fecha}</div><div class="ped-info-row">👤 ${esc(o.cliente_nombre||'—')}</div>${o.cliente_telefono?`<div class="ped-info-row">📱 ${esc(o.cliente_telefono)}</div>`:''}</div><div class="ped-items-box">${items}</div><div class="ped-foot"><div class="ped-total">$${Number(o.total).toLocaleString('es-AR')}</div><div class="ped-acts">${o.estado==='nuevo'?`<button class="ped-btn ped-btn-ok" onclick="setOrd('${o.id}','confirmado')">✓ Confirmar</button>`:''}${o.estado!=='cancelado'?`<button class="ped-btn ped-btn-can" onclick="setOrd('${o.id}','cancelado')">✗ Cancelar</button>`:''}</div></div></div>`;
     }).join('');
   } catch(e) { el.innerHTML='<div class="empty-state"><div class="ic">❌</div><p>Error</p></div>'; }
 }
