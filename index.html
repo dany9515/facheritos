@@ -696,6 +696,20 @@ textarea.finp { resize: none; min-height: 60px; }
   </div>
 </div>
 
+<!-- MP PAGO APROBADO MODAL -->
+<div id="mp-success-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:500;padding:16px;">
+  <div style="background:#fff;border-radius:20px;padding:28px 20px;max-width:400px;width:100%;text-align:center;">
+    <div style="font-size:52px;margin-bottom:12px;">🎉</div>
+    <div style="font-family:'Bangers',cursive;font-size:28px;letter-spacing:1px;margin-bottom:8px;color:#2e7d32;">¡Pago aprobado!</div>
+    <div style="font-size:13px;font-weight:700;color:#555;margin-bottom:24px;line-height:1.5;">Tu pedido fue confirmado. Tocá el botón para avisarle a Facheritos por WhatsApp.</div>
+    <button id="mp-wa-confirm-btn" style="width:100%;background:#25D366;color:#fff;border:none;border-radius:12px;padding:14px;font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Enviar confirmación por WhatsApp
+    </button>
+    <button onclick="document.getElementById('mp-success-modal').style.display='none'" style="width:100%;background:#f0f0f0;color:#111;border:none;border-radius:12px;padding:12px;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;cursor:pointer;">Cerrar</button>
+  </div>
+</div>
+
 <!-- FILTER OVERLAY MOBILE -->
 <div class="filter-overlay" id="filter-overlay" onclick="closeMobileFilter()"></div>
 <div class="filter-panel" id="filter-panel">
@@ -1299,6 +1313,25 @@ window.sendMP = async function() {
     return;
   }
 
+  // Datos del cliente: desde perfil si está logueado, sino desde campos manuales
+  let nombre, tel, dir;
+  if (currentUser && currentPerfil) {
+    nombre = `${currentPerfil.nombre || ''} ${currentPerfil.apellido || ''}`.trim() || 'Cliente';
+    tel = currentPerfil.telefono || '';
+    dir = [currentPerfil.direccion, currentPerfil.ciudad, currentPerfil.provincia].filter(Boolean).join(', ');
+  } else {
+    const gNombre = document.getElementById('guest-nombre')?.value.trim() || '';
+    const gApellido = document.getElementById('guest-apellido')?.value.trim() || '';
+    tel = document.getElementById('guest-tel')?.value.trim() || '';
+    dir = document.getElementById('guest-dir')?.value.trim() || '';
+    if (!gNombre || !gApellido || !tel) {
+      showToast('⚠️', 'Completá tu nombre, apellido y teléfono');
+      btn.disabled = false; btn.textContent = 'Pagar con Mercado Pago';
+      return;
+    }
+    nombre = `${gNombre} ${gApellido}`;
+  }
+
   // Email obligatorio para MP
   const payerEmail = currentUser?.email || document.getElementById('mp-email-input')?.value?.trim();
   if (!payerEmail) {
@@ -1316,9 +1349,6 @@ window.sendMP = async function() {
     const s = p.precio * item.qty; total += s;
     return `• ${p.nombre} x${item.qty} = $${s.toLocaleString('es-AR')}`;
   }).filter(Boolean);
-  const nombre = currentPerfil ? `${currentPerfil.nombre} ${currentPerfil.apellido}` : 'Cliente';
-  const tel    = currentPerfil?.telefono || '';
-  const dir    = currentPerfil ? [currentPerfil.direccion, currentPerfil.ciudad, currentPerfil.provincia].filter(Boolean).join(', ') : '';
   const note   = document.getElementById('by-note').value.trim();
   const baseUrl = location.href.split('?')[0];
 
@@ -1573,7 +1603,36 @@ async function init() {
         pedidoId = ref2.id;
       } catch(_) {}
       cart = []; saveCart(); updateCartBadge();
-      showToast('✅', '¡Pago aprobado! Tu pedido fue confirmado 🎉');
+
+      // Construir mensaje de WhatsApp para la tienda
+      const entregaTexto = order.entrega === 'envio' ? '🚚 Envío a domicilio' : '🏪 Retiro en local';
+      const waMsg = [
+        `¡Hola Facheritos! 👶 Nuevo pedido — PAGO CONFIRMADO`, ``,
+        `✅ *PAGO APROBADO por Mercado Pago*`,
+        paymentId ? `*ID de pago:* ${paymentId}` : '',
+        ``,
+        `*Nombre:* ${order.cliente_nombre}`,
+        order.cliente_telefono ? `*Teléfono:* ${order.cliente_telefono}` : '',
+        (order.cliente_direccion || '').trim() ? `*Dirección:* ${order.cliente_direccion}` : '',
+        order.cliente_email ? `*Email:* ${order.cliente_email}` : '',
+        ``, `*Entrega:* ${entregaTexto}`,
+        `*Pago:* 💳 Mercado Pago`,
+        ``, `*Productos:*`, ...order.items, ``,
+        `*Total: $${Number(order.total).toLocaleString('es-AR')}*`,
+        order.nota ? `\n*Nota:* ${order.nota}` : '',
+      ].filter(x => x !== null && x !== undefined && x !== '').join('\n');
+
+      const waNum = tiendaConfig.whatsapp || '5492974359455';
+      const waUrl = `https://wa.me/${waNum}?text=${encodeURIComponent(waMsg)}`;
+
+      // Mostrar modal con botón WA (garantizado) e intentar apertura automática
+      const modal = document.getElementById('mp-success-modal');
+      const waConfirmBtn = document.getElementById('mp-wa-confirm-btn');
+      if (waConfirmBtn) waConfirmBtn.onclick = () => { window.open(waUrl, '_blank'); modal.style.display = 'none'; };
+      if (modal) modal.style.display = 'flex';
+      try { window.open(waUrl, '_blank'); } catch(_) {}
+
+      // Email de confirmación al cliente
       try {
         const cfg = tiendaConfig;
         const ejs = cfg.emailjs || {};
@@ -1584,7 +1643,7 @@ async function init() {
             to_name:       order.cliente_nombre?.split(' ')[0] || 'Cliente',
             items_lista:   order.items.join('\n'),
             total_texto:   `$${Number(order.total).toLocaleString('es-AR')}`,
-            entrega_texto: order.entrega === 'envio' ? '🚚 Envío a domicilio' : '🏪 Retiro en local',
+            entrega_texto: entregaTexto,
             nota_texto:    order.nota || 'Sin notas adicionales',
             tienda_nombre: cfg.nombre || 'Facheritos',
             pedido_id:     pedidoId || '—',
