@@ -182,6 +182,16 @@ body { font-family: 'Nunito', sans-serif; background: #fff; color: #111; min-hei
 .bnav-ico { font-size: 20px; line-height: 1; }
 .pad-bnav { padding-bottom: 72px; }
 
+/* ── FOOTER ── */
+.store-footer { background: #111; color: rgba(255,255,255,.7); text-align: center; padding: 32px 20px 20px; margin-top: 8px; }
+.footer-brand { font-family: 'Permanent Marker', cursive; font-size: 28px; color: #fff; margin-bottom: 4px; }
+.footer-tagline { font-size: 12px; font-weight: 700; color: rgba(255,255,255,.4); letter-spacing: 1px; margin-bottom: 20px; }
+.footer-social { display: flex; justify-content: center; gap: 16px; margin-bottom: 20px; }
+.social-link { display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; border-radius: 12px; background: rgba(255,255,255,.1); color: #fff; font-size: 20px; text-decoration: none; transition: background .2s, transform .15s; }
+.social-link:active { transform: scale(.93); }
+@media(hover:hover) { .social-link:hover { transform: translateY(-2px); } .social-link.fb:hover { background:#1877f2; } .social-link.ig:hover { background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); } .social-link.tt:hover { background:#010101; outline:1px solid rgba(255,255,255,.15); } }
+.footer-copy { font-size: 11px; color: rgba(255,255,255,.25); font-weight: 700; }
+
 /* ── SHEETS ── */
 .ov { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: none; align-items: flex-end; justify-content: center; z-index: 400; }
 .ov.on { display: flex; }
@@ -451,6 +461,24 @@ textarea.finp { resize: none; min-height: 60px; }
         </div>
       </div>
     </div>
+
+    <!-- FOOTER -->
+    <footer class="store-footer">
+      <div class="footer-brand">FACHERITOS</div>
+      <div class="footer-tagline">Ropa y accesorios para los más chicos</div>
+      <div class="footer-social">
+        <a href="https://www.facebook.com/facheritos.kids.595948" target="_blank" rel="noopener noreferrer" class="social-link fb" aria-label="Facebook">
+          <i class="fa-brands fa-facebook-f"></i>
+        </a>
+        <a href="https://www.instagram.com/facheritostruncado?igsh=dWJ0c3B2em50b2pl" target="_blank" rel="noopener noreferrer" class="social-link ig" aria-label="Instagram">
+          <i class="fa-brands fa-instagram"></i>
+        </a>
+        <a href="https://www.tiktok.com/@facheritos.ok?_r=1&amp;_t=ZS-96dDXqWBoI9" target="_blank" rel="noopener noreferrer" class="social-link tt" aria-label="TikTok">
+          <i class="fa-brands fa-tiktok"></i>
+        </a>
+      </div>
+      <div class="footer-copy">© 2025 Facheritos · Todos los derechos reservados</div>
+    </footer>
   </div>
 
   <nav class="bnav">
