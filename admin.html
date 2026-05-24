@@ -393,6 +393,10 @@ select.finp{cursor:pointer}
       <div class="cfg-card"><h3>📱 WhatsApp</h3>
         <div class="fld"><label class="flb">Número (sin + ni espacios)</label><input class="finp" id="cfg-wa" placeholder="5492974359455" inputmode="numeric"></div>
       </div>
+      <div class="cfg-card"><h3>🏦 Pago por transferencia</h3>
+        <p style="font-size:0.82rem;color:#888;margin-bottom:14px;line-height:1.5;">Si completás el alias o CBU, aparecerá automáticamente en el carrito del cliente para que pueda transferir.</p>
+        <div class="fld"><label class="flb">Alias o CBU</label><input class="finp" id="cfg-alias" placeholder="ej: facheritos.mp"></div>
+      </div>
       <div class="cfg-card"><h3>📧 Notificaciones por email</h3>
         <p style="font-size:0.82rem;color:#888;margin-bottom:14px;line-height:1.5;">Creá una cuenta gratuita en <strong>emailjs.com</strong>, conectá tu servicio de email y pegá las credenciales acá. El cliente recibirá un email automático al hacer un pedido.</p>
         <div class="fld"><label class="flb">Public Key</label><input class="finp" id="cfg-ejs-key" placeholder="xxxxxxxxxxxxxxxxx"></div>
@@ -403,6 +407,7 @@ select.finp{cursor:pointer}
           <code>{{to_name}}</code> — nombre del cliente<br>
           <code>{{items_lista}}</code> — productos del pedido<br>
           <code>{{total_texto}}</code> — total en pesos<br>
+          <code>{{entrega_texto}}</code> — envío o retiro en local<br>
           <code>{{nota_texto}}</code> — nota del cliente<br>
           <code>{{tienda_nombre}}</code> — nombre de la tienda<br>
           <code>{{pedido_id}}</code> — ID del pedido
@@ -904,6 +909,7 @@ async function loadConfig() {
       document.getElementById('cfg-desc').value = cfg.descripcion||'';
       document.getElementById('cfg-dir').value = cfg.direccion||'';
       document.getElementById('cfg-wa').value = cfg.whatsapp||'';
+      document.getElementById('cfg-alias').value = cfg.alias||'';
       const ejs = cfg.emailjs || {};
       document.getElementById('cfg-ejs-key').value = ejs.public_key||'';
       document.getElementById('cfg-ejs-svc').value = ejs.service_id||'';
@@ -919,6 +925,7 @@ window.saveConfig = async function() {
       descripcion: document.getElementById('cfg-desc').value.trim(),
       direccion: document.getElementById('cfg-dir').value.trim(),
       whatsapp: document.getElementById('cfg-wa').value.trim(),
+      alias: document.getElementById('cfg-alias').value.trim(),
       emailjs: {
         public_key: document.getElementById('cfg-ejs-key').value.trim(),
         service_id:  document.getElementById('cfg-ejs-svc').value.trim(),
