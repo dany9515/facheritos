@@ -291,10 +291,13 @@ textarea.finp { resize: none; min-height: 60px; }
 .btn-sm { padding: 7px 14px !important; font-size: 12px !important; border-radius: 8px !important; }
 .pay-wa { width: 100%; border: none; border-radius: 12px; padding: 14px; font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; background: #25D366; color: #fff; margin-bottom: 8px; }
 .pay-wa:disabled { opacity: 0.6; cursor: not-allowed; }
-.checkout-alias { background: #f0f9ff; border: 2px solid #0ea5e9; border-radius: 12px; padding: 14px; margin-bottom: 12px; text-align: center; }
-.checkout-alias-label { font-size: 11px; font-weight: 800; color: #0369a1; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
-.checkout-alias-value { font-size: 22px; font-weight: 900; color: #111; letter-spacing: 1px; }
-.checkout-alias-hint { font-size: 11px; color: #0369a1; margin-top: 4px; }
+.checkout-alias { background: #f0f9ff; border: 2px solid #0ea5e9; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
+.checkout-alias-label { font-size: 11px; font-weight: 800; color: #0369a1; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; text-align: center; }
+.transfer-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(14,165,233,.15); gap: 8px; }
+.transfer-row:last-of-type { border-bottom: none; }
+.transfer-key { font-size: 10px; font-weight: 900; color: #0369a1; text-transform: uppercase; letter-spacing: .8px; flex-shrink: 0; }
+.transfer-val { font-size: 14px; font-weight: 900; color: #111; letter-spacing: .3px; text-align: right; word-break: break-all; }
+.checkout-alias-hint { font-size: 11px; color: #0369a1; margin-top: 10px; text-align: center; }
 .delivery-label { font-size: 12px; font-weight: 800; color: #444; margin-bottom: 6px; margin-top: 4px; }
 .delivery-selector { display: flex; gap: 8px; margin-bottom: 12px; }
 .delivery-opt { flex: 1; border: 2px solid #ddd; border-radius: 10px; padding: 10px 6px; text-align: center; cursor: pointer; font-size: 12px; font-weight: 800; color: #888; transition: all 0.15s; user-select: none; }
@@ -629,8 +632,19 @@ textarea.finp { resize: none; min-height: 60px; }
 
       <!-- Alias bancario (solo si paga por transferencia y está configurado) -->
       <div class="checkout-alias" id="checkout-alias" style="display:none">
-        <div class="checkout-alias-label">🏦 Transferí al siguiente alias</div>
-        <div class="checkout-alias-value" id="alias-value">—</div>
+        <div class="checkout-alias-label">🏦 Datos para la transferencia</div>
+        <div class="transfer-row">
+          <span class="transfer-key">Alias</span>
+          <span class="transfer-val">facheritostruncado</span>
+        </div>
+        <div class="transfer-row">
+          <span class="transfer-key">CVU</span>
+          <span class="transfer-val">0000003100031601751877</span>
+        </div>
+        <div class="transfer-row">
+          <span class="transfer-key">Titular</span>
+          <span class="transfer-val">Evelyn Perochena</span>
+        </div>
         <div class="checkout-alias-hint">Luego subí el comprobante ↓</div>
       </div>
 
@@ -1152,9 +1166,7 @@ function renderCartSheet() {
   const totalMostrar = isTransfer ? Math.round(total * 0.85) : total;
 
   // Alias: solo si transfiere y hay alias configurado
-  if (tiendaConfig.alias) {
-    document.getElementById('checkout-alias').style.display = isTransfer ? 'block' : 'none';
-  }
+  document.getElementById('checkout-alias').style.display = isTransfer ? 'block' : 'none';
   // Comprobante: solo con transferencia
   document.getElementById('comp-label').style.display = isTransfer ? 'block' : 'none';
 
@@ -1228,9 +1240,6 @@ async function loadTiendaConfig() {
     const snap = await getDoc(doc(db, 'config', 'tienda'));
     if (snap.exists()) {
       tiendaConfig = snap.data();
-      if (tiendaConfig.alias) {
-        document.getElementById('alias-value').textContent = tiendaConfig.alias;
-      }
     }
   } catch(e) {}
 }
