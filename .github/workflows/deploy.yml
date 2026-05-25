@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   workflow_dispatch:
 
 permissions:
@@ -22,3 +22,4 @@ jobs:
           publish_dir: .
           exclude_assets: '.gitignore,.github,node_modules'
           enable_jekyll: false
+          cname: facheritos.operlog.com.ar
