@@ -1376,7 +1376,7 @@ window.sendMP = async function() {
     return `• ${p.nombre} x${item.qty} = $${s.toLocaleString('es-AR')}`;
   }).filter(Boolean);
   const note   = document.getElementById('by-note').value.trim();
-  const baseUrl = location.href.split('?')[0];
+  const baseUrl = window.location.origin + window.location.pathname.replace(/\/$/, '');
 
   try {
     // Crear preferencia — ⚠️ Producción: mover a Cloud Function
@@ -1387,7 +1387,6 @@ window.sendMP = async function() {
         items: [{ title: 'Compra en Facheritos', quantity: 1, currency_id: 'ARS', unit_price: total }],
         payer: { email: payerEmail },
         back_urls: { success: baseUrl, failure: baseUrl, pending: baseUrl },
-        auto_return: 'approved',
         statement_descriptor: 'FACHERITOS',
       }),
     });
