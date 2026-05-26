@@ -135,6 +135,9 @@ select.finp{cursor:pointer}
 .form-wrap{flex:1;overflow-y:auto;padding:16px;padding-bottom:100px}
 .form-sec{margin-bottom:24px}
 .form-sec-ttl{font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#aaa;margin-bottom:12px;padding-left:2px}
+.talle-chip{border:2px solid #e0e0e0;background:#fff;color:#555;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:800;cursor:pointer;transition:background .15s,border-color .15s,color .15s;user-select:none;font-family:'Nunito',sans-serif}
+.talle-chip.on{background:#111;border-color:#111;color:#fff}
+.talle-group-lbl{font-size:9px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#aaa;margin-bottom:6px;margin-top:4px}
 
 /* FOTOS GRID */
 .fotos-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
@@ -428,8 +431,8 @@ select.finp{cursor:pointer}
       <div class="fld"><label class="flb">Nombre *</label><input class="finp" id="fp-nom" placeholder="Ej: Mameluco Rayado"></div>
       <div class="fld"><label class="flb">Sección *</label>
         <div class="radio-group">
-          <label class="radio-opt on" id="radio-bebes" onclick="selectSec('bebes')"><div class="radio-dot"></div><div><div class="radio-label">👶 Bebés</div><div class="radio-desc">RN al 6</div></div></label>
-          <label class="radio-opt" id="radio-teens" onclick="selectSec('teens')"><div class="radio-dot"></div><div><div class="radio-label">👦 Teens</div><div class="radio-desc">6 al 18</div></div></label>
+          <label class="radio-opt on" id="radio-bebes" onclick="selectSec('bebes')"><div class="radio-dot"></div><div><div class="radio-label">👶 Bebés</div><div class="radio-desc">Talles 0 al 5</div></div></label>
+          <label class="radio-opt" id="radio-teens" onclick="selectSec('teens')"><div class="radio-dot"></div><div><div class="radio-label">👦 Niños/Teens</div><div class="radio-desc">Talles 2 al 18</div></div></label>
         </div>
       </div>
       <div class="fld"><label class="flb">Género *</label>
@@ -451,9 +454,9 @@ select.finp{cursor:pointer}
       <div class="form-sec-ttl">Detalles</div>
       <div class="fld"><label class="flb">Descripción</label><textarea class="finp" id="fp-desc" placeholder="Materiales, características..."></textarea></div>
       <div class="fld">
-        <label class="flb">Talles (separados por coma)</label>
-        <input class="finp" id="fp-tags" placeholder="Ej: RN, 3m, 6m">
-        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap" id="talles-sugg"></div>
+        <label class="flb">Talles disponibles</label>
+        <div id="talles-chips" style="margin-top:4px"></div>
+        <input type="hidden" id="fp-tags">
       </div>
     </div>
 
@@ -736,8 +739,7 @@ window.closeForm = function() { showPage('admin'); navTo(currentTab==='form'?'pr
 window.selectSec = function(sec) {
   formSec = sec;
   ['bebes','teens'].forEach(s => document.getElementById('radio-'+s).classList.toggle('on', s===sec));
-  const sugg = sec==='bebes' ? ['RN','1m','3m','6m','9m','12m','18m','2','3','4','5','6'] : ['6','7','8','9','10','11','12','13','14','15','16','17','18'];
-  document.getElementById('talles-sugg').innerHTML = sugg.map(t=>`<span onclick="addTalle('${t}')" style="background:#f0f0f0;border:1.5px solid #e0e0e0;padding:5px 12px;border-radius:100px;font-size:12px;font-weight:800;cursor:pointer">${t}</span>`).join('');
+  renderTallesChips();
 }
 
 window.selectGen = function(gen) {
@@ -745,10 +747,28 @@ window.selectGen = function(gen) {
   ['unisex','nino','nina'].forEach(g => document.getElementById('radio-'+g).classList.toggle('on', g===gen));
 }
 
-window.addTalle = function(t) {
+window.renderTallesChips = function() {
   const inp = document.getElementById('fp-tags');
-  const vals = inp.value.split(',').map(v=>v.trim()).filter(Boolean);
-  if (!vals.includes(t)) { vals.push(t); inp.value = vals.join(', '); }
+  const selected = new Set((inp.value||'').split(',').map(v=>v.trim()).filter(Boolean));
+  const groups = formSec === 'bebes'
+    ? [{ lbl: 'Bebés', vals: ['0','1','2','3','4','5'] }]
+    : [
+        { lbl: 'Niños pequeños', vals: ['2','3','4','5','6'] },
+        { lbl: 'Niños y adolescentes', vals: ['4','6','8','10','12','14','16','18'] }
+      ];
+  document.getElementById('talles-chips').innerHTML = groups.map(g =>
+    `<div class="talle-group-lbl">${g.lbl}</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${
+      g.vals.map(t => `<button type="button" class="talle-chip${selected.has(t)?' on':''}" onclick="toggleTalle('${t}')">${t}</button>`).join('')
+    }</div>`
+  ).join('');
+}
+
+window.toggleTalle = function(t) {
+  const inp = document.getElementById('fp-tags');
+  const vals = new Set((inp.value||'').split(',').map(v=>v.trim()).filter(Boolean));
+  if (vals.has(t)) vals.delete(t); else vals.add(t);
+  inp.value = [...vals].join(', ');
+  renderTallesChips();
 }
 
 // FOTOS
