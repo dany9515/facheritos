@@ -800,21 +800,36 @@ window.removeFoto = function(idx) { fotosArray.splice(idx,1); updateFotosGrid();
 
 let originalFileDataUrl = null;
 
+function compressImage(dataUrl, maxSide, quality) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if (w > maxSide || h > maxSide) {
+        if (w > h) { h = Math.round(h * maxSide / w); w = maxSide; }
+        else { w = Math.round(w * maxSide / h); h = maxSide; }
+      }
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(c.toDataURL('image/jpeg', quality));
+    };
+    img.src = dataUrl;
+  });
+}
+
 window.handleFoto = function(input) {
   const file = input.files[0]; if (!file) return;
   input.value = '';
-  if (file.size > 5 * 1024 * 1024) { showToast('⚠️', 'La imagen no puede superar 5 MB'); return; }
   const reader = new FileReader();
-  reader.onload = e => {
-    originalFileDataUrl = e.target.result;
-    const img = document.getElementById('cropper-img');
-    img.src = e.target.result;
+  reader.onload = async e => {
+    const compressed = await compressImage(e.target.result, 1600, 0.85);
+    originalFileDataUrl = compressed;
+    const cropImg = document.getElementById('cropper-img');
     if (cropperInst) { cropperInst.destroy(); cropperInst = null; }
-    document.getElementById('cropper-modal').classList.add('on');
-    document.body.style.overflow = 'hidden';
-    img.onload = function() {
-      cropperInst = new Cropper(img, {
-        aspectRatio: NaN, // libre, sin forzar cuadrado
+    cropImg.onload = function() {
+      cropperInst = new Cropper(cropImg, {
+        aspectRatio: NaN,
         viewMode: 1,
         dragMode: 'move',
         autoCropArea: 0.95,
@@ -827,6 +842,9 @@ window.handleFoto = function(input) {
         background: true,
       });
     };
+    document.getElementById('cropper-modal').classList.add('on');
+    document.body.style.overflow = 'hidden';
+    cropImg.src = compressed;
   };
   reader.readAsDataURL(file);
 }
