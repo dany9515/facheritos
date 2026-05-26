@@ -800,53 +800,51 @@ window.removeFoto = function(idx) { fotosArray.splice(idx,1); updateFotosGrid();
 
 let originalFileDataUrl = null;
 
-function compressImage(dataUrl, maxSide, quality) {
-  return new Promise(resolve => {
-    const img = new Image();
-    img.onload = () => {
-      let w = img.width, h = img.height;
-      if (w > maxSide || h > maxSide) {
-        if (w > h) { h = Math.round(h * maxSide / w); w = maxSide; }
-        else { w = Math.round(w * maxSide / h); h = maxSide; }
-      }
-      const c = document.createElement('canvas');
-      c.width = w; c.height = h;
-      c.getContext('2d').drawImage(img, 0, 0, w, h);
-      resolve(c.toDataURL('image/jpeg', quality));
-    };
-    img.src = dataUrl;
+function compressImage(file, maxSide, quality) {
+  // createImageBitmap decodifica cualquier formato nativo del browser (HEIC/HEIF, JPEG, PNG, WebP, etc.)
+  // y devuelve un bitmap que canvas siempre puede dibujar, convirtiendo la salida a JPEG.
+  return createImageBitmap(file).then(bitmap => {
+    let w = bitmap.width, h = bitmap.height;
+    if (w > maxSide || h > maxSide) {
+      if (w > h) { h = Math.round(h * maxSide / w); w = maxSide; }
+      else { w = Math.round(w * maxSide / h); h = maxSide; }
+    }
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    c.getContext('2d').drawImage(bitmap, 0, 0, w, h);
+    bitmap.close();
+    return c.toDataURL('image/jpeg', quality);
   });
 }
 
 window.handleFoto = function(input) {
   const file = input.files[0]; if (!file) return;
   input.value = '';
-  const reader = new FileReader();
-  reader.onload = async e => {
-    const compressed = await compressImage(e.target.result, 1600, 0.85);
-    originalFileDataUrl = compressed;
-    const cropImg = document.getElementById('cropper-img');
-    if (cropperInst) { cropperInst.destroy(); cropperInst = null; }
-    cropImg.onload = function() {
-      cropperInst = new Cropper(cropImg, {
-        aspectRatio: NaN,
-        viewMode: 1,
-        dragMode: 'move',
-        autoCropArea: 0.95,
-        guides: true,
-        center: true,
-        highlight: true,
-        cropBoxMovable: true,
-        cropBoxResizable: true,
-        toggleDragModeOnDblclick: false,
-        background: true,
-      });
-    };
-    document.getElementById('cropper-modal').classList.add('on');
-    document.body.style.overflow = 'hidden';
-    cropImg.src = compressed;
-  };
-  reader.readAsDataURL(file);
+  compressImage(file, 1600, 0.85)
+    .then(compressed => {
+      originalFileDataUrl = compressed;
+      const cropImg = document.getElementById('cropper-img');
+      if (cropperInst) { cropperInst.destroy(); cropperInst = null; }
+      cropImg.onload = function() {
+        cropperInst = new Cropper(cropImg, {
+          aspectRatio: NaN,
+          viewMode: 1,
+          dragMode: 'move',
+          autoCropArea: 0.95,
+          guides: true,
+          center: true,
+          highlight: true,
+          cropBoxMovable: true,
+          cropBoxResizable: true,
+          toggleDragModeOnDblclick: false,
+          background: true,
+        });
+      };
+      document.getElementById('cropper-modal').classList.add('on');
+      document.body.style.overflow = 'hidden';
+      cropImg.src = compressed;
+    })
+    .catch(() => showToast('⚠️', 'No se pudo procesar la imagen. Intentá con otro formato.'));
 }
 
 window.confirmCrop = function() {
