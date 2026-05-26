@@ -751,11 +751,11 @@ window.renderTallesChips = function() {
   const inp = document.getElementById('fp-tags');
   const selected = new Set((inp.value||'').split(',').map(v=>v.trim()).filter(Boolean));
   const groups = formSec === 'bebes'
-    ? [{ lbl: 'Bebés', vals: ['0','1','2','3','4','5'] }]
-    : [
-        { lbl: 'Niños pequeños', vals: ['2','3','4','5','6'] },
-        { lbl: 'Niños y adolescentes', vals: ['4','6','8','10','12','14','16','18'] }
-      ];
+    ? [
+        { lbl: 'Bebés', vals: ['0','1','2','3','4','5'] },
+        { lbl: 'Niños pequeños', vals: ['2','3','4','5','6'] }
+      ]
+    : [{ lbl: 'Niños y adolescentes', vals: ['4','6','8','10','12','14','16','18'] }];
   document.getElementById('talles-chips').innerHTML = groups.map(g =>
     `<div class="talle-group-lbl">${g.lbl}</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${
       g.vals.map(t => `<button type="button" class="talle-chip${selected.has(t)?' on':''}" onclick="toggleTalle('${t}')">${t}</button>`).join('')
