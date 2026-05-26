@@ -2,7 +2,7 @@
   "name": "Facheritos Admin",
   "short_name": "Facheritos",
   "description": "Panel de administración de Facheritos",
-  "start_url": "/facheritos/admin.html",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#111111",
   "theme_color": "#111111",
