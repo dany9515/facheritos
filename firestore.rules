@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == 'facheritos@operlog.com.ar';
+    }
+
+    // Productos - cualquiera puede leer, solo admin escribe
+    match /productos/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Perfiles - cada usuario solo ve y edita el suyo
+    match /perfiles/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Pedidos
+    match /pedidos/{id} {
+      // Crear: permitido para todos, con validacion basica
+      allow create: if request.resource.data.estado == 'nuevo'
+                    && request.resource.data.total is number
+                    && request.resource.data.total > 0
+                    && request.resource.data.keys().hasAll(['items', 'total', 'estado'])
+                    && (
+                         request.resource.data.usuario_id == null
+                         || (request.auth != null && request.resource.data.usuario_id == request.auth.uid)
+                       );
+      // Leer: admin ve todos; usuario autenticado solo los suyos; invitados nunca
+      allow read: if isAdmin()
+                  || (request.auth != null && request.auth.uid == resource.data.usuario_id);
+      // Modificar/eliminar: solo admin
+      allow update, delete: if isAdmin();
+    }
+
+    // Config - cualquiera puede leer, solo admin escribe
+    match /config/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}
