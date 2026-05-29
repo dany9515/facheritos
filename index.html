@@ -356,6 +356,14 @@ textarea.finp { resize: none; min-height: 60px; }
 .sort-sel { border: 1.5px solid #e0e0e0; border-radius: 8px; padding: 5px 10px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 12px; color: #555; background: #fff; outline: none; cursor: pointer; }
 .sort-sel:focus { border-color: #111; }
 
+/* SHARE */
+.prod-card-footer { display: flex; gap: 6px; align-items: stretch; }
+.prod-card-footer .prod-card-add { flex: 1; }
+.share-btn-card { background: #f0f0f0; border: none; border-radius: 7px; padding: 7px 10px; font-size: 13px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #555; transition: background .15s; }
+.share-btn-card:active { background: #ddd; }
+.share-btn-det { background: #f0f0f0; border: none; color: #555; width: 30px; height: 30px; border-radius: 8px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.share-btn-det:active { background: #ddd; }
+
 /* ZOOM */
 #zoom-ov { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,.95); display: none; align-items: center; justify-content: center; overscroll-behavior: contain; }
 #zoom-ov.on { display: flex; }
@@ -609,7 +617,7 @@ textarea.finp { resize: none; min-height: 60px; }
 <div class="ov" id="ov-det" onclick="if(event.target===this)closeOv('ov-det')">
   <div class="sheet">
     <div class="sheet-pull"></div>
-    <div class="sheet-hd"><div class="sheet-ttl" id="det-ttl">Producto</div><button class="x-btn" onclick="closeOv('ov-det')">×</button></div>
+    <div class="sheet-hd"><div class="sheet-ttl" id="det-ttl">Producto</div><div style="display:flex;gap:6px;align-items:center"><button class="share-btn-det" id="det-share-btn" title="Compartir"><i class="fa-solid fa-share-nodes"></i></button><button class="x-btn" onclick="closeOv('ov-det')">×</button></div></div>
     <div class="sheet-bd" id="det-bd"></div>
     <div class="sheet-ft" id="det-ft"></div>
   </div>
@@ -823,7 +831,10 @@ window.goPage = function(p) {
 }
 
 window.goToProfile = function() { goPage(auth.currentUser ? 'profile' : 'auth'); }
-window.closeOv = function(id) { document.getElementById(id).classList.remove('on'); }
+window.closeOv = function(id) {
+  document.getElementById(id).classList.remove('on');
+  if (id === 'ov-det') history.replaceState({}, '', location.pathname);
+}
 
 // ─── AUTH ───
 window.authTab = function(t) {
@@ -1061,9 +1072,12 @@ function renderGrid(prods) {
           <span class="prod-card-price-old">$${Number(p.precio).toLocaleString('es-AR')}</span>
           <span class="prod-card-price-new">$${Number(Math.round(p.precio * 0.85)).toLocaleString('es-AR')} <span class="prod-card-discount">-15%</span></span>
         </div>
-        <button class="prod-card-add ${p.stock === 0 ? 'out' : ''}" onclick="event.stopPropagation();${p.stock > 0 ? `addCart('${p.id}')` : ''}">
-          ${p.stock > 0 ? '<i class="fa-solid fa-cart-plus"></i> Agregar' : 'Sin stock'}
-        </button>
+        <div class="prod-card-footer">
+          <button class="prod-card-add ${p.stock === 0 ? 'out' : ''}" onclick="event.stopPropagation();${p.stock > 0 ? `addCart('${p.id}')` : ''}">
+            ${p.stock > 0 ? '<i class="fa-solid fa-cart-plus"></i> Agregar' : 'Sin stock'}
+          </button>
+          <button class="share-btn-card" onclick="event.stopPropagation();shareProduct('${p.id}')" title="Compartir"><i class="fa-solid fa-share-nodes"></i></button>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -1158,6 +1172,8 @@ window.openDet = function(id) {
     ? `<button class="btn-black" onclick="addCart('${p.id}');closeOv('ov-det')"><i class="fa-solid fa-cart-plus"></i> Agregar al carrito</button>`
     : `<button class="pay-mp">Sin stock disponible</button>`;
   document.getElementById('ov-det').classList.add('on');
+  history.replaceState({}, '', '?producto=' + id);
+  document.getElementById('det-share-btn').onclick = () => shareProduct(id);
   // Init Swiper si hay múltiples fotos
   if (showPagination) {
     setTimeout(() => {
@@ -1595,6 +1611,22 @@ window.closeZoom = function() {
   document.body.style.overflow = '';
 }
 
+window.shareProduct = function(id) {
+  const p = allProductos.find(x => x.id === id); if (!p) return;
+  const url = `${location.origin}${location.pathname}?producto=${id}`;
+  if (navigator.share) {
+    navigator.share({
+      title: p.nombre,
+      text: `${p.nombre} · $${Number(p.precio).toLocaleString('es-AR')} · Facheritos`,
+      url
+    }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(url)
+      .then(() => showToast('🔗', 'Link copiado'))
+      .catch(() => showToast('⚠️', 'No se pudo copiar el link'));
+  }
+}
+
 window.showToast = function(ic, msg) {
   const t = document.getElementById('toast');
   document.getElementById('t-ic').textContent = ic;
@@ -1611,9 +1643,18 @@ async function init() {
   }
   await Promise.all([loadAndRender(), loadTiendaConfig()]);
 
-  // Procesar retorno desde Mercado Pago
+  // Procesar URL params
   const params = new URLSearchParams(location.search);
   const colStatus = params.get('collection_status') || params.get('status');
+  const productoParam = params.get('producto');
+
+  // Abrir producto directo desde URL compartida
+  if (!colStatus && productoParam) {
+    document.getElementById('splash').style.display = 'none';
+    openDet(productoParam);
+  }
+
+  // Procesar retorno desde Mercado Pago
   if (colStatus) {
     history.replaceState({}, '', location.pathname);
     const pendingRaw = localStorage.getItem('fach_mp_pending');
