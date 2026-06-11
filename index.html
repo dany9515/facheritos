@@ -1102,9 +1102,31 @@ window.loadMisPedidos = async function() {
   } catch(e) { el.innerHTML = '<div style="text-align:center;padding:48px;color:#bbb"><p style="font-weight:700">Error al cargar</p></div>'; }
 }
 
+// ─── DEV: datos mock para verificar el rediseño sin Firestore ───
+// ⚠️ TEMPORAL — SACAR ANTES DEL DEPLOY FINAL. Inerte en producción (solo file:// o ?mock).
+const DEV_MOCK = location.protocol === 'file:' || new URLSearchParams(location.search).has('mock');
+const MOCK_PRODUCTS = [
+  {id:'m1', nombre:'Buzo Oversize Graffiti', categoria:'Buzos', genero:'unisex', precio:18900, precio_oferta:15900, tags:'2,4,6,8,10', stock:8, seccion:'bebes', activo:true, emoji:'🧥', descripcion:'Buzo de frisa premium con estampa graffiti. Calce oversize.', creado:{seconds:1718000000}},
+  {id:'m2', nombre:'Remera Skate Crew', categoria:'Remeras', genero:'nino', precio:9900, tags:'2,4,6', stock:12, seccion:'bebes', activo:true, emoji:'👕', creado:{seconds:1718001000}},
+  {id:'m3', nombre:'Gorra Trucker Logo', categoria:'Gorras', genero:'unisex', precio:7500, tags:'Única', stock:5, seccion:'bebes', activo:true, emoji:'🧢', creado:{seconds:1718002000}},
+  {id:'m4', nombre:'Body Bebé Marker', categoria:'Bebés', genero:'unisex', precio:6900, tags:'0,3,6', stock:0, seccion:'bebes', activo:true, emoji:'👶', creado:{seconds:1718003000}},
+  {id:'m5', nombre:'Conjunto Deportivo', categoria:'Conjuntos', genero:'nina', precio:16900, precio_oferta:13500, tags:'4,6', stock:6, seccion:'bebes', activo:true, emoji:'🩳', creado:{seconds:1718004000}},
+  {id:'m6', nombre:'Jogger Cargo Negro', categoria:'Pantalones', genero:'nino', precio:15900, tags:'8,10,12,14', stock:9, seccion:'teens', activo:true, emoji:'👖', creado:{seconds:1718005000}},
+  {id:'m7', nombre:'Campera Puffer Mini', categoria:'Camperas', genero:'nina', precio:24900, precio_oferta:19900, tags:'8,10,12', stock:4, seccion:'teens', activo:true, emoji:'🧥', creado:{seconds:1718006000}},
+  {id:'m8', nombre:'Vestido Denim Teen', categoria:'Vestidos', genero:'nina', precio:13900, tags:'12,14,16', stock:7, seccion:'teens', activo:true, emoji:'👗', creado:{seconds:1718007000}},
+  {id:'m9', nombre:'Buzo Canguro Teen', categoria:'Buzos', genero:'unisex', precio:21900, tags:'14,16,18', stock:10, seccion:'teens', activo:true, emoji:'🧥', creado:{seconds:1718008000}},
+  {id:'m10', nombre:'Medias Pack x3', categoria:'Accesorios', genero:'unisex', precio:4500, tags:'S,M,L', stock:20, seccion:'teens', activo:true, emoji:'🧦', creado:{seconds:1718009000}},
+];
+
 // ─── PRODUCTOS ───
 async function loadAndRender() {
   document.getElementById('grid').innerHTML = '<div class="loading-grid"><div class="spinner"></div></div>';
+  if (DEV_MOCK) {
+    allProductos = MOCK_PRODUCTS.filter(p => p.activo && (!currentSeccion || p.seccion === currentSeccion));
+    buildSidebarFilters();
+    applyFilters();
+    return;
+  }
   try {
     const q = currentSeccion
       ? query(collection(db, 'productos'), where('activo', '==', true), where('seccion', '==', currentSeccion))
