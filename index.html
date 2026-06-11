@@ -60,6 +60,9 @@
   /* Marca / externos */
   --whatsapp:#25d366; --mp:#009ee3; --facebook:#1877f2;
 
+  /* Acento de marca del rediseño 2026 (highlighter "volt") — solo ofertas / CTA / foco */
+  --volt:#e8ff00; --volt-ink:var(--ink);
+
   /* Radios */
   --r-xs:4px; --r-sm:8px; --r-md:10px; --r-lg:12px;
   --r-xl:14px; --r-2xl:16px; --r-3xl:20px; --r-pill:100px; --r-full:50%;
@@ -68,6 +71,7 @@
   --shadow-sm:0 1px 2px rgba(0,0,0,.06);
   --shadow-md:0 4px 16px rgba(0,0,0,.08);
   --shadow-lg:0 4px 24px rgba(0,0,0,.3);
+  --shadow-hard:6px 6px 0 var(--ink);   /* sombra dura streetwear (rediseño) */
 
   /* Espaciado (4pt) — adoptar de a poco */
   --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:20px;
@@ -81,8 +85,9 @@
   --ff-logo:'Permanent Marker',cursive;
 
   /* Motion */
-  --dur-fast:.15s; --dur:.2s; --dur-slow:.3s;
+  --dur-fast:.15s; --dur:.2s; --dur-slow:.3s; --press:.13s;
   --ease-out:cubic-bezier(.22,1,.36,1);
+  --ease-ios:cubic-bezier(.32,.72,0,1);   /* sheets estilo iOS (rediseño) */
 
   /* Z-index */
   --z-base:1; --z-nav:100; --z-header:200; --z-promo:201;
@@ -120,17 +125,21 @@ body { font-family: 'Nunito', sans-serif; background: var(--white); color: var(-
 @media(max-width: 480px) { .promo-sep { display: none; } .promo-banner { gap: 8px; font-size: var(--fs-xs); } }
 
 /* ── SPLASH ── */
-.splash { position: fixed; inset: 0; z-index: var(--z-splash); background: var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; transition: opacity .4s ease; }
+.splash { position: fixed; inset: 0; z-index: var(--z-splash); background: var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; transition: opacity .4s ease; overflow: hidden; }
 .splash.hide { opacity: 0; pointer-events: none; }
-.splash-logo { font-family: 'Permanent Marker', cursive; font-size: 56px; color: var(--white); text-align: center; margin-bottom: 6px; }
-.splash-sub { font-size: var(--fs-xs); color: var(--on-dark-muted); font-weight: 700; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 48px; }
-.splash-question { font-size: var(--fs-md); color: rgba(255,255,255,.6); font-weight: 700; margin-bottom: 20px; text-align: center; }
-.splash-opts { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 320px; }
-.splash-btn { background: var(--white); color: var(--ink); border: none; border-radius: var(--r-2xl); padding: 20px 24px; display: flex; align-items: center; gap: 16px; cursor: pointer; text-align: left; transition: background .15s; }
-.splash-btn:active { background: var(--surface-alt); }
-.splash-btn-icon { font-size: 40px; flex-shrink: 0; }
+.splash-kicker { display: inline-block; font-weight: 900; font-size: var(--fs-xs); letter-spacing: 3px; text-transform: uppercase; color: var(--ink); background: var(--volt); padding: 6px 14px; border-radius: var(--r-pill); margin-bottom: 22px; }
+.splash-logo { font-family: 'Permanent Marker', cursive; font-size: clamp(52px, 16vw, 78px); line-height: .95; color: var(--white); text-align: center; transform: rotate(-2deg); margin-bottom: 8px; }
+.splash-sub { font-size: var(--fs-xs); color: var(--on-dark-muted); font-weight: 800; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 44px; }
+.splash-question { font-size: var(--fs-md); color: var(--on-dark-muted); font-weight: 800; margin-bottom: 18px; text-align: center; }
+.splash-opts { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 360px; }
+.splash-btn { background: var(--white); color: var(--ink); border: 2px solid var(--ink); border-radius: var(--r-xl); padding: 18px 20px; display: flex; align-items: center; gap: 16px; cursor: pointer; text-align: left; transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out); }
+@media(hover:hover){ .splash-btn:hover { transform: translate(-3px,-3px); box-shadow: 6px 6px 0 var(--volt); } .splash-btn:hover .splash-btn-arr { transform: translateX(4px); } }
+.splash-btn:active { transform: translate(0,0); box-shadow: none; }
+.splash-btn-icon { font-size: 38px; flex-shrink: 0; }
+.splash-btn-tx { flex: 1; min-width: 0; }
 .splash-btn-title { font-family: 'Bangers', cursive; font-size: var(--fs-2xl); letter-spacing: 1px; display: block; }
 .splash-btn-desc { font-size: var(--fs-sm); color: var(--text-muted); font-weight: 700; display: block; margin-top: 2px; }
+.splash-btn-arr { flex-shrink: 0; font-weight: 900; font-size: 22px; transition: transform var(--dur) var(--ease-out); }
 
 /* ── HEADER ── */
 .hdr { background: var(--ink); position: sticky; top: 33px; z-index: var(--z-header); width: 100%; box-shadow: 0 6px 20px rgba(0,0,0,.18); }
@@ -494,17 +503,20 @@ textarea.finp { resize: none; min-height: 60px; }
 
 <!-- SPLASH -->
 <div id="splash" class="splash">
+  <div class="splash-kicker">Streetwear infantil</div>
   <div class="splash-logo">FACHERITOS</div>
-  <div class="splash-sub">Ropa & Accesorios</div>
+  <div class="splash-sub">Calle &amp; cariño</div>
   <div class="splash-question">¿Para quién querés comprar?</div>
   <div class="splash-opts">
     <button class="splash-btn" onclick="selectSeccion('bebes')">
       <span class="splash-btn-icon">👶</span>
-      <span><span class="splash-btn-title">Bebés & Niños</span><span class="splash-btn-desc">Recién nacido hasta talle 6</span></span>
+      <span class="splash-btn-tx"><span class="splash-btn-title">Bebés &amp; Niños</span><span class="splash-btn-desc">Recién nacido hasta talle 6</span></span>
+      <span class="splash-btn-arr">→</span>
     </button>
     <button class="splash-btn" onclick="selectSeccion('teens')">
       <span class="splash-btn-icon">👦</span>
-      <span><span class="splash-btn-title">Niños & Adolescentes</span><span class="splash-btn-desc">Talle 6 al 18</span></span>
+      <span class="splash-btn-tx"><span class="splash-btn-title">Niños &amp; Adolescentes</span><span class="splash-btn-desc">Talle 6 al 18</span></span>
+      <span class="splash-btn-arr">→</span>
     </button>
   </div>
 </div>
