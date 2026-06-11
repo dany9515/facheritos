@@ -1080,11 +1080,11 @@ async function loadAndRender() {
 function buildSidebarFilters() {
   const cats = [...new Set(allProductos.map(p => p.categoria).filter(Boolean))].sort();
   document.getElementById('cat-filter-opts').innerHTML = cats.map(c =>
-    `<div class="filter-opt ${selectedCats.has(c) ? 'on' : ''}" onclick="toggleCat(${JSON.stringify(c)})"><div class="filter-check"></div><span class="filter-opt-label">${esc(c)}</span></div>`
+    `<div class="filter-opt ${selectedCats.has(c) ? 'on' : ''}" onclick='toggleCat(${JSON.stringify(c)})'><div class="filter-check"></div><span class="filter-opt-label">${esc(c)}</span></div>`
   ).join('');
   const talles = [...new Set(allProductos.flatMap(p => (p.tags || '').split(',').map(t => t.trim())).filter(Boolean))];
   document.getElementById('talle-filter-opts').innerHTML = talles.map(t =>
-    `<div class="filter-opt ${selectedTalles.has(t) ? 'on' : ''}" onclick="toggleTalle(${JSON.stringify(t)})"><div class="filter-check"></div><span class="filter-opt-label">${esc(t)}</span></div>`
+    `<div class="filter-opt ${selectedTalles.has(t) ? 'on' : ''}" onclick='toggleTalle(${JSON.stringify(t)})'><div class="filter-check"></div><span class="filter-opt-label">${esc(t)}</span></div>`
   ).join('');
 }
 
@@ -1180,10 +1180,10 @@ window.openMobileFilter = function(type) {
   let content = '';
   if (type === 'cat') {
     const cats = [...new Set(allProductos.map(p => p.categoria).filter(Boolean))].sort();
-    content = `<div style="display:flex;flex-direction:column;gap:8px">${cats.map(c => `<div class="filter-opt ${selectedCats.has(c) ? 'on' : ''}" onclick="toggleCat(${JSON.stringify(c)});renderMobileFilter(${JSON.stringify(type)})"><div class="filter-check"></div><span class="filter-opt-label">${esc(c)}</span></div>`).join('')}</div>`;
+    content = `<div style="display:flex;flex-direction:column;gap:8px">${cats.map(c => `<div class="filter-opt ${selectedCats.has(c) ? 'on' : ''}" onclick='toggleCat(${JSON.stringify(c)});renderMobileFilter(${JSON.stringify(type)})'><div class="filter-check"></div><span class="filter-opt-label">${esc(c)}</span></div>`).join('')}</div>`;
   } else if (type === 'talle') {
     const talles = [...new Set(allProductos.flatMap(p => (p.tags || '').split(',').map(t => t.trim())).filter(Boolean))];
-    content = `<div style="display:flex;flex-wrap:wrap;gap:8px">${talles.map(t => `<div onclick="toggleTalle(${JSON.stringify(t)});renderMobileFilter(${JSON.stringify(type)})" style="border:2px solid ${selectedTalles.has(t) ? '#111' : '#e0e0e0'};background:${selectedTalles.has(t) ? '#111' : '#fff'};color:${selectedTalles.has(t) ? '#fff' : '#555'};border-radius:8px;padding:8px 14px;font-size:13px;font-weight:800;cursor:pointer">${esc(t)}</div>`).join('')}</div>`;
+    content = `<div style="display:flex;flex-wrap:wrap;gap:8px">${talles.map(t => `<div onclick='toggleTalle(${JSON.stringify(t)});renderMobileFilter(${JSON.stringify(type)})' style="border:2px solid ${selectedTalles.has(t) ? '#111' : '#e0e0e0'};background:${selectedTalles.has(t) ? '#111' : '#fff'};color:${selectedTalles.has(t) ? '#fff' : '#555'};border-radius:8px;padding:8px 14px;font-size:13px;font-weight:800;cursor:pointer">${esc(t)}</div>`).join('')}</div>`;
   } else {
     content = `<div style="display:flex;gap:10px;align-items:center"><input type="number" class="price-inp" placeholder="Mínimo" inputmode="numeric" value="${document.getElementById('price-min')?.value||''}" oninput="document.getElementById('price-min').value=this.value;applyFilters()"><span style="color:#bbb;font-weight:700">—</span><input type="number" class="price-inp" placeholder="Máximo" inputmode="numeric" value="${document.getElementById('price-max')?.value||''}" oninput="document.getElementById('price-max').value=this.value;applyFilters()"></div>`;
   }
