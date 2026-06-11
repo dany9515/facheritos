@@ -120,7 +120,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--white); color: var(-
   border-bottom: 1px solid var(--n-800);
 }
 .promo-item { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
-.promo-item i { color: var(--gold); font-size: var(--fs-sm); }
+.promo-item i { color: var(--volt); font-size: var(--fs-sm); }
 .promo-sep { color: var(--n-750); font-size: var(--fs-lg); }
 @media(max-width: 480px) { .promo-sep { display: none; } .promo-banner { gap: 8px; font-size: var(--fs-xs); } }
 
@@ -159,7 +159,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--white); color: var(-
 /* GÉNERO TABS */
 .gender-bar { display: flex; border-top: 1px solid rgba(255,255,255,.1); }
 .gender-tab { flex: 1; padding: 11px 10px; text-align: center; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: var(--fs-base); color: var(--on-dark-muted); cursor: pointer; background: none; border: none; border-bottom: 2px solid transparent; transition: color var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out); }
-.gender-tab.on { color: var(--white); border-bottom-color: var(--white); }
+.gender-tab.on { color: var(--white); border-bottom-color: var(--volt); }
 @media(hover:hover) { .gender-tab:hover:not(.on) { color: var(--white); } }
 
 /* BUSCADOR */
@@ -221,33 +221,31 @@ body { font-family: 'Nunito', sans-serif; background: var(--white); color: var(-
 @media(min-width: 1024px) { .prod-grid { grid-template-columns: repeat(4, 1fr); } }
 
 /* ── CARD ── */
-.prod-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; cursor: pointer; display: flex; flex-direction: column; transition: box-shadow var(--dur) var(--ease-out), transform var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out); }
-.prod-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); border-color: var(--border-strong); }
-.prod-card:active { transform: scale(.98); }
-.prod-card-img { width: 100%; aspect-ratio: 1; background: var(--surface); overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; }
+.prod-card { background: var(--white); border: 2px solid var(--ink); border-radius: var(--r-lg); overflow: hidden; cursor: pointer; display: flex; flex-direction: column; transition: box-shadow var(--dur) var(--ease-out), transform var(--dur) var(--ease-out); }
+@media(hover:hover) { .prod-card:hover { box-shadow: var(--shadow-hard); transform: translate(-3px,-3px); } }
+.prod-card:active { transform: translate(-1px,-1px) scale(.995); transition-duration: var(--press); }
+.prod-card-img { width: 100%; aspect-ratio: 1; background: var(--surface); overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; border-bottom: 2px solid var(--ink); }
 .prod-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--dur-slow) var(--ease-out); }
 .prod-card:hover .prod-card-img img { transform: scale(1.05); }
 .prod-card-img .emoji { font-size: 48px; }
-.prod-card-badge { position: absolute; top: 8px; left: 8px; color: var(--white); font-size: var(--fs-xs); font-weight: 900; letter-spacing: .5px; padding: 3px 8px; border-radius: var(--r-pill); text-transform: uppercase; box-shadow: var(--shadow-sm); }
-.prod-card-badge.nino { background: var(--info); }
-.prod-card-badge.nina { background: var(--magenta); }
-.prod-card-badge.unisex { background: var(--n-750); }
-.prod-card-out { position: absolute; top: 8px; right: 8px; background: var(--danger); color: var(--white); font-size: var(--fs-xs); font-weight: 900; padding: 3px 8px; border-radius: var(--r-pill); box-shadow: var(--shadow-sm); }
+.prod-card-badge { position: absolute; top: 8px; right: 8px; color: var(--white); font-family: 'Bangers', cursive; font-size: var(--fs-sm); letter-spacing: .5px; padding: 2px 9px; border-radius: var(--r-pill); background: rgba(0,0,0,.6); }
+.prod-card-sale { position: absolute; top: 8px; left: 8px; background: var(--volt); color: var(--ink); font-size: var(--fs-xs); font-weight: 900; letter-spacing: .5px; padding: 3px 8px; border-radius: var(--r-pill); border: 1.5px solid var(--ink); transform: rotate(-4deg); }
+.prod-card-out { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.74); color: var(--ink); font-family: 'Bangers', cursive; font-size: var(--fs-xl); letter-spacing: 1px; }
 .prod-card-body { padding: 12px; display: flex; flex-direction: column; flex: 1; }
 .prod-card-cat { font-size: var(--fs-xs); font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--text-faint); margin-bottom: 4px; }
 .prod-card-name { font-size: var(--fs-base); font-weight: 800; color: var(--ink); line-height: 1.3; margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .prod-card-price { font-family: 'Bangers', cursive; font-size: var(--fs-2xl); color: var(--ink); display: block; margin-bottom: 10px; }
-.prod-card-add { width: 100%; background: var(--ink); color: var(--white); border: 1.5px solid var(--ink); border-radius: var(--r-sm); padding: 9px; font-family: 'Nunito', sans-serif; font-weight: 900; font-size: var(--fs-xs); letter-spacing: .3px; cursor: pointer; transition: background var(--dur) var(--ease-out), transform var(--dur) var(--ease-out); display: flex; align-items: center; justify-content: center; gap: 6px; }
-@media(hover:hover) { .prod-card-add:hover { background: var(--n-800); } }
-.prod-card-add:active { background: var(--n-800); transform: scale(.97); }
-.prod-card-add.out { background: var(--surface-alt); color: var(--text-faint); border-color: var(--border); cursor: not-allowed; }
+.prod-card-add { width: 100%; background: var(--ink); color: var(--white); border: 2px solid var(--ink); border-radius: var(--r-sm); padding: 9px; font-family: 'Nunito', sans-serif; font-weight: 900; font-size: var(--fs-xs); letter-spacing: .3px; cursor: pointer; transition: background var(--dur) var(--ease-out), color var(--dur) var(--ease-out), transform var(--press) var(--ease-out); display: flex; align-items: center; justify-content: center; gap: 6px; }
+@media(hover:hover) { .prod-card-add:hover { background: var(--volt); color: var(--ink); } }
+.prod-card-add:active { transform: scale(.96); }
+.prod-card-add.out { background: var(--surface-alt); color: var(--text-faint); border-color: var(--border-strong); cursor: not-allowed; }
 
 
 /* PRECIO TACHADO */
 .prod-card-prices { margin-top: auto; margin-bottom: 10px; }
-.prod-card-price-old { font-size: var(--fs-xs); color: var(--text-faint); text-decoration: line-through; display: block; font-weight: 700; margin-bottom: 1px; }
-.prod-card-price-new { font-family: 'Bangers', cursive; font-size: var(--fs-2xl); color: var(--ink); display: flex; align-items: center; gap: 6px; line-height: 1.05; }
-.prod-card-discount { background: var(--success-bg); color: var(--success-ink); font-size: var(--fs-xs); font-weight: 900; padding: 2px 7px; border-radius: var(--r-pill); font-family: 'Nunito', sans-serif; }
+.prod-card-price-old { font-size: var(--fs-xs); color: var(--text-faint); text-decoration: line-through; display: block; font-weight: 800; margin-bottom: 1px; }
+.prod-card-price-new { font-family: 'Bangers', cursive; font-size: var(--fs-3xl); color: var(--ink); display: flex; align-items: center; gap: 6px; line-height: .95; }
+.prod-card-discount { background: var(--success-bg); color: var(--success-ink); font-size: 10px; font-weight: 900; padding: 2px 7px; border-radius: var(--r-pill); font-family: 'Nunito', sans-serif; }
 
 /* EMPTY / LOADING */
 .empty-prods { grid-column: 1/-1; text-align: center; padding: 64px 16px; color: var(--text-faint); }
@@ -259,10 +257,10 @@ body { font-family: 'Nunito', sans-serif; background: var(--white); color: var(-
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── HERO ── */
-.hero { background: var(--ink); padding: 28px 16px 32px; text-align: center; }
-.hero-badge { display: inline-block; border: 1px solid rgba(255,255,255,.35); color: rgba(255,255,255,.75); font-size: var(--fs-xs); font-weight: 800; letter-spacing: 2px; text-transform: uppercase; padding: 5px 14px; border-radius: var(--r-pill); margin-bottom: 14px; }
-.hero-title { font-family: 'Permanent Marker', cursive; font-size: clamp(40px, 10vw, 72px); color: var(--white); line-height: 1; margin-bottom: 10px; }
-.hero-sub { color: rgba(255,255,255,.6); font-size: var(--fs-base); font-weight: 600; margin-bottom: 16px; }
+.hero { background: var(--ink); padding: 30px 16px 36px; text-align: center; }
+.hero-badge { display: inline-block; background: var(--volt); color: var(--ink); border: none; font-size: var(--fs-xs); font-weight: 900; letter-spacing: 2px; text-transform: uppercase; padding: 6px 14px; border-radius: var(--r-pill); margin-bottom: 16px; }
+.hero-title { font-family: 'Permanent Marker', cursive; font-size: clamp(44px, 12vw, 84px); color: var(--white); line-height: .95; margin-bottom: 12px; transform: rotate(-1.5deg); }
+.hero-sub { color: var(--on-dark-muted); font-size: var(--fs-base); font-weight: 700; margin-bottom: 16px; }
 .hero-addr { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18); color: rgba(255,255,255,.75); font-size: var(--fs-sm); font-weight: 700; padding: 7px 14px; border-radius: var(--r-pill); }
 
 /* ── BOTTOM NAV ── */
@@ -1215,15 +1213,19 @@ function renderGrid(prods) {
   const genLabels = { nino: 'Niño', nina: 'Niña', unisex: 'Unisex' };
   g.innerHTML = prods.map(p => {
     const imgHtml = p.foto_url ? `<img src="${p.foto_url}" alt="${esc(p.nombre)}" loading="lazy">` : `<span class="emoji">${p.emoji || '👶'}</span>`;
-    const genBadge = p.genero ? `<span class="prod-card-badge ${p.genero}">${genLabels[p.genero] || ''}</span>` : '';
+    const genBadge = p.genero ? `<span class="prod-card-badge">${genLabels[p.genero] || ''}</span>` : '';
+    const onSale = p.precio_oferta && p.precio_oferta < p.precio;
+    const base = onSale ? p.precio_oferta : p.precio;
+    const transfer = Math.round(base * 0.85);
+    const pct = Math.round((1 - transfer / p.precio) * 100);
     return `<div class="prod-card" onclick="openDet('${p.id}')">
-      <div class="prod-card-img">${imgHtml}${genBadge}${p.stock === 0 ? '<span class="prod-card-out">Sin stock</span>' : ''}</div>
+      <div class="prod-card-img">${imgHtml}${onSale ? '<span class="prod-card-sale">SALE</span>' : ''}${genBadge}${p.stock === 0 ? '<span class="prod-card-out">Sin stock</span>' : ''}</div>
       <div class="prod-card-body">
         <div class="prod-card-cat">${esc(p.categoria || '')}</div>
         <div class="prod-card-name">${esc(p.nombre)}</div>
         <div class="prod-card-prices">
           <span class="prod-card-price-old">$${Number(p.precio).toLocaleString('es-AR')}</span>
-          <span class="prod-card-price-new">$${Number(Math.round(p.precio * 0.85)).toLocaleString('es-AR')} <span class="prod-card-discount">-15%</span></span>
+          <span class="prod-card-price-new">$${Number(transfer).toLocaleString('es-AR')} <span class="prod-card-discount">-${pct}%</span></span>
         </div>
         <div class="prod-card-footer">
           <button class="prod-card-add ${p.stock === 0 ? 'out' : ''}" onclick="event.stopPropagation();${p.stock > 0 ? `addCart('${p.id}')` : ''}">
