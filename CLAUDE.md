@@ -125,14 +125,14 @@ Rediseño visual fuerte de la tienda. Se prototipó primero en **`prototipo.html
 
 **✅ Fase 2 — SALE (`precio_oferta`)**: feature de oferta por producto. Campo opcional **`precio_oferta`** agregado al form de `admin.html` (con validación: menor al precio; guardado y carga). En el store: si existe y es menor a `precio` → etiqueta SALE volt + `precio` tachado + descuento dinámico; el efectivo se usa en cards, detalle, carrito, total, `sendMP` (monto) y `sendWA` (mensaje, marca "(oferta)").
 
-**Harness de dev**: `index.html` tiene `DEV_MOCK` (flag `file://` o `?mock` + `MOCK_PRODUCTS`) para verificar el diseño local sin Firestore (la API key está restringida al dominio). **⚠️ TEMPORAL — SACAR ANTES DEL DEPLOY** (inerte en prod https). Para verificar: `http://127.0.0.1:5500/index.html?mock` (Live Server) o doble clic (file://).
+**Harness de dev**: ~~`DEV_MOCK`~~ **ELIMINADO (12/06/2026)** — ya no hace falta: la API key acepta `localhost:5500` y `127.0.0.1:5500` como referrers (verificado vía REST), así que el diseño se verifica en local con **datos reales**: `npx http-server -p 5500 -a 127.0.0.1` + `http://127.0.0.1:5500/index.html`. `file://` NO funciona (sin referrer válido).
 
 **Skills instaladas** (modo seguro, en `~/.claude/skills/`): `emilkowal-animations` (motion, usar), `taste-skill@redesign-existing-projects` y `@high-end-visual-design` (esta última NO debe manejar el diseño — choca con la marca). El acento volt y el motion (press scale .97, sheet arrastrable, tabs deslizantes) vienen de ahí.
 
 **"Subir a producción" = push a GitHub.** La rama `rediseno-tienda` NO deploya hasta mergear a `master` + push a ambas ramas.
 
 **Pendiente para que el rediseño salga VIVO**:
-1. Probar con **datos reales** (se está agregando `localhost:5500` a los referrers de la API key en Google Cloud Console).
-2. **Sacar el `DEV_MOCK`** de `index.html`.
+1. ✅ Probado con **datos reales** en local (12/06/2026): splash→grid→detalle→deep-link→carrito→total transferencia, 0 errores de consola, verificado con Playwright.
+2. ✅ `DEV_MOCK` eliminado de `index.html` (12/06/2026); `?mock` ya no hace nada.
 3. Merge a `master` + push a ambas ramas (regla de deploy).
-4. (Aparte) Pulir para acercar más al `prototipo.html`; y eventualmente MP real (Cloud Function).
+4. (Aparte) Pulir para acercar más al `prototipo.html`; y eventualmente MP real (Cloud Function). Observación de la verificación: el "7" de Bangers en precios se puede leer como "1" (legibilidad, anotar en deuda de diseño).
