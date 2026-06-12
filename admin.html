@@ -447,6 +447,7 @@ select.finp{cursor:pointer}
         <div class="fld"><label class="flb">Precio ($) *</label><input class="finp" id="fp-precio" type="number" placeholder="0" inputmode="numeric"></div>
         <div class="fld"><label class="flb">Stock</label><input class="finp" id="fp-stock" type="number" value="1" inputmode="numeric"></div>
       </div>
+      <div class="fld"><label class="flb">Precio de oferta ($) — opcional</label><input class="finp" id="fp-precio-oferta" type="number" placeholder="Vacío = sin oferta · debe ser menor al precio" inputmode="numeric"></div>
     </div>
 
     <!-- DETALLES -->
@@ -699,6 +700,7 @@ window.openForm = async function(id) {
   formSec = 'bebes'; formGen = 'unisex';
   ['fp-nom','fp-cat','fp-desc','fp-tags'].forEach(i => { const el=document.getElementById(i); if(el) el.value=''; });
   document.getElementById('fp-precio').value = '';
+  document.getElementById('fp-precio-oferta').value = '';
   document.getElementById('fp-stock').value = '1';
   document.getElementById('fp-activo').checked = true;
   selectSec('bebes'); selectGen('unisex');
@@ -713,6 +715,7 @@ window.openForm = async function(id) {
         document.getElementById('fp-nom').value = p.nombre||'';
         document.getElementById('fp-cat').value = p.categoria||'';
         document.getElementById('fp-precio').value = p.precio||'';
+        document.getElementById('fp-precio-oferta').value = p.precio_oferta||'';
         document.getElementById('fp-stock').value = p.stock??1;
         document.getElementById('fp-desc').value = p.descripcion||'';
         document.getElementById('fp-tags').value = p.tags||'';
@@ -886,9 +889,12 @@ window.saveProd = async function() {
   const nom = document.getElementById('fp-nom').value.trim();
   const cat = document.getElementById('fp-cat').value.trim();
   const precio = parseFloat(document.getElementById('fp-precio').value);
+  const precioOfertaRaw = parseFloat(document.getElementById('fp-precio-oferta').value);
+  const precioOferta = (!isNaN(precioOfertaRaw) && precioOfertaRaw > 0) ? precioOfertaRaw : null;
   if (!nom) { showToast('⚠️','Ingresá el nombre'); return; }
   if (!cat) { showToast('⚠️','Ingresá la categoría'); return; }
   if (isNaN(precio)||precio<=0) { showToast('⚠️','Ingresá un precio válido'); return; }
+  if (precioOferta !== null && precioOferta >= precio) { showToast('⚠️','El precio de oferta debe ser menor al precio'); return; }
   const btn = document.getElementById('save-btn');
   btn.textContent = '⏳ Guardando...'; btn.disabled = true;
   try {
@@ -906,7 +912,7 @@ window.saveProd = async function() {
       }
     }
     const data = {
-      nombre: nom, categoria: cat, precio,
+      nombre: nom, categoria: cat, precio, precio_oferta: precioOferta,
       stock: parseInt(document.getElementById('fp-stock').value)||0,
       descripcion: document.getElementById('fp-desc').value.trim(),
       tags: document.getElementById('fp-tags').value.trim(),
