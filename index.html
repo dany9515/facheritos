@@ -403,12 +403,12 @@ textarea.finp { resize: none; min-height: 60px; }
 
 /* AUTH */
 .auth-page { min-height: 100vh; background: var(--ink); display: flex; flex-direction: column; align-items: center; padding: 40px 20px; }
-.auth-logo { font-family: 'Permanent Marker', cursive; font-size: 44px; color: var(--white); margin-bottom: 4px; text-align: center; }
-.auth-sub { color: var(--on-dark-muted); font-size: var(--fs-xs); font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 28px; }
-.auth-card { background: var(--white); border-radius: var(--r-3xl); width: 100%; max-width: 400px; overflow: hidden; }
-.auth-tabs { display: flex; border-bottom: 2px solid var(--border); }
-.auth-tab { flex: 1; padding: 14px; text-align: center; font-family: 'Nunito', sans-serif; font-weight: 900; font-size: var(--fs-base); cursor: pointer; color: var(--text-muted); border: none; border-bottom: 3px solid transparent; background: none; }
-.auth-tab.on { color: var(--ink); border-bottom-color: var(--ink); }
+.auth-logo { font-family: 'Permanent Marker', cursive; font-size: clamp(44px,12vw,56px); color: var(--white); margin-bottom: 8px; text-align: center; transform: rotate(-2deg); }
+.auth-sub { display: inline-block; background: var(--volt); color: var(--ink); font-size: var(--fs-xs); font-weight: 900; letter-spacing: 2px; text-transform: uppercase; padding: 5px 12px; border-radius: var(--r-pill); margin-bottom: 28px; }
+.auth-card { background: var(--white); border: 3px solid var(--ink); border-radius: var(--r-3xl); width: 100%; max-width: 400px; overflow: hidden; }
+.auth-tabs { display: flex; border-bottom: 2px solid var(--ink); }
+.auth-tab { flex: 1; padding: 14px; text-align: center; font-family: 'Nunito', sans-serif; font-weight: 900; font-size: var(--fs-base); cursor: pointer; color: var(--text-muted); border: none; border-bottom: 3px solid transparent; background: none; transition: color var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out); }
+.auth-tab.on { color: var(--ink); border-bottom-color: var(--volt); }
 .auth-form { padding: 20px; display: flex; flex-direction: column; }
 .auth-err { background: var(--danger-bg); color: var(--danger-ink); border-radius: var(--r-sm); padding: 10px 14px; font-size: var(--fs-sm); font-weight: 700; margin-bottom: 12px; display: none; }
 .auth-ok { background: var(--success-bg); color: var(--success-ink); border-radius: var(--r-sm); padding: 10px 14px; font-size: var(--fs-sm); font-weight: 700; margin-bottom: 12px; display: none; }
@@ -418,20 +418,20 @@ textarea.finp { resize: none; min-height: 60px; }
 /* PERFIL */
 .profile-page { padding: 16px; padding-bottom: 80px; }
 .profile-hero { background: var(--ink); border-radius: var(--r-2xl); padding: 24px; margin-bottom: 16px; text-align: center; color: var(--white); }
-.prof-av { width: 64px; height: 64px; border-radius: var(--r-full); background: rgba(255,255,255,.1); border: 2px solid rgba(255,255,255,.2); display: flex; align-items: center; justify-content: center; font-family: 'Bangers', cursive; font-size: var(--fs-3xl); margin: 0 auto 10px; }
+.prof-av { width: 66px; height: 66px; border-radius: var(--r-full); background: var(--volt); border: 2px solid var(--ink); color: var(--ink); display: flex; align-items: center; justify-content: center; font-family: 'Bangers', cursive; font-size: var(--fs-3xl); margin: 0 auto 10px; }
 .prof-name { font-family: 'Bangers', cursive; font-size: 24px; letter-spacing: 1px; }
 .prof-email { font-size: var(--fs-sm); color: var(--on-dark-muted); font-weight: 600; }
-.menu-list { display: flex; flex-direction: column; gap: 8px; }
-.menu-item { background: var(--white); border: 2px solid var(--border); border-radius: var(--r-lg); padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
-.menu-item:active { border-color: var(--ink); }
+.menu-list { display: flex; flex-direction: column; gap: 10px; }
+.menu-item { background: var(--white); border: 2px solid var(--ink); border-radius: var(--r-lg); padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out); }
+.menu-item:active { transform: scale(.99); }
 .menu-ic { font-size: var(--fs-xl); width: 28px; text-align: center; }
 .menu-info { flex: 1; }
 .menu-nm { font-size: var(--fs-base); font-weight: 900; }
 .menu-desc { font-size: var(--fs-sm); color: var(--text-muted); font-weight: 600; margin-top: 1px; }
 .menu-arr { color: var(--text-faint); font-size: var(--fs-xl); }
-.datos-section { background: var(--white); border: 2px solid var(--border); border-radius: var(--r-xl); padding: 16px; margin-bottom: 12px; }
-.datos-section h3 { font-size: var(--fs-base); font-weight: 900; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
-.ped-card { background: var(--white); border: 2px solid var(--border); border-radius: var(--r-xl); padding: 14px; margin-bottom: 10px; }
+.datos-section { background: var(--white); border: 2px solid var(--ink); border-radius: var(--r-xl); padding: 16px; margin-bottom: 12px; }
+.datos-section h3 { font-size: var(--fs-base); font-weight: 900; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 2px solid var(--ink); }
+.ped-card { background: var(--white); border: 2px solid var(--ink); border-radius: var(--r-xl); padding: 14px; margin-bottom: 10px; }
 .ped-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .ped-id { font-family: 'Bangers', cursive; font-size: var(--fs-lg); letter-spacing: 1px; }
 .ped-fecha { font-size: var(--fs-xs); color: var(--text-muted); font-weight: 700; margin-bottom: 8px; }
@@ -476,7 +476,7 @@ textarea.finp { resize: none; min-height: 60px; }
   .eye-btn:hover { color: var(--ink); }
   .delivery-opt:hover:not(.on) { border-color: var(--n-400); color: var(--text-secondary); }
   .comp-upload:hover:not(.has-file) { border-color: var(--n-400); color: var(--text-secondary); }
-  .menu-item:hover { border-color: var(--n-300); }
+  .menu-item:hover { transform: translate(-2px,-2px); box-shadow: var(--shadow-hard); }
   .auth-tab:hover:not(.on) { color: var(--text-secondary); }
   .share-btn-det:hover { background: var(--n-300); color: var(--ink); }
   .finp:hover:not(:focus) { border-color: var(--n-300); }
