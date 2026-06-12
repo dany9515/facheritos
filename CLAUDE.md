@@ -113,9 +113,9 @@ Archivo: `firestore.rules`. Se deployaron con Firebase CLI.
 
 **Sistema de diseño**: monocromo negro `#111` + blanco, fonts Permanent Marker (logo), Bangers (display/precios), Nunito (body). Estética streetwear infantil.
 
-## Rediseño streetwear bold (sesión 11/06/2026 — EN CURSO)
+## Rediseño streetwear bold (sesión 11/06/2026 — ✅ EN PRODUCCIÓN desde 12/06/2026)
 
-Rediseño visual fuerte de la tienda. Se prototipó primero en **`prototipo.html`** (raíz, local, mock, NO deployado — es la referencia visual) y se está migrando al `index.html` real en la rama **`rediseno-tienda`** (pusheada a GitHub como backup; **NO deploya** hasta mergear a `master`).
+Rediseño visual fuerte de la tienda. Se prototipó primero en **`prototipo.html`** (raíz, local, mock, NO deployado — es la referencia visual), se migró al `index.html` real en la rama `rediseno-tienda` y se **mergeó a `master` y deployó el 12/06/2026** (verificado vivo con productos reales, 0 errores).
 
 **Estrategia**: partir del `index.html` real (el motor: Firebase, auth, checkout, splash, sharing) y **trasplantar solo la presentación** (CSS + markup de render). NO reescribir el motor.
 
@@ -131,8 +131,16 @@ Rediseño visual fuerte de la tienda. Se prototipó primero en **`prototipo.html
 
 **"Subir a producción" = push a GitHub.** La rama `rediseno-tienda` NO deploya hasta mergear a `master` + push a ambas ramas.
 
-**Pendiente para que el rediseño salga VIVO**:
-1. ✅ Probado con **datos reales** en local (12/06/2026): splash→grid→detalle→deep-link→carrito→total transferencia, 0 errores de consola, verificado con Playwright.
-2. ✅ `DEV_MOCK` eliminado de `index.html` (12/06/2026); `?mock` ya no hace nada.
-3. Merge a `master` + push a ambas ramas (regla de deploy).
-4. (Aparte) Pulir para acercar más al `prototipo.html`; y eventualmente MP real (Cloud Function). Observación de la verificación: el "7" de Bangers en precios se puede leer como "1" (legibilidad, anotar en deuda de diseño).
+**✅ VIVO desde 12/06/2026**: probado con datos reales en local (Playwright, flujo completo, 0 errores), `DEV_MOCK` eliminado, merge a `master` + push a ambas ramas, workflow success, producción verificada.
+
+**Decisión de producto (12/06/2026): NO existe envío gratis como modalidad** — la barra de progreso de envío gratis del prototipo no se migra.
+
+**Pendiente — pulido fase 3 (acercar a `prototipo.html`), por impacto**:
+1. Hero editorial "Ropa con *calle* y cariño" (highlight volt) + CTAs "Ver la colección →" / "Cómo comprar" (hoy: bloque negro con FACHERITOS repetido).
+2. Marquee superior animado en loop (hoy: promo bar estática).
+3. Cards con borde negro grueso + `--shadow-hard` (hoy más suaves).
+4. Tabs de género pills/segmented deslizante (hoy subrayado).
+5. Detalle: fondo oscuro en imagen, label "ELEGÍ EL TALLE", "En stock — listo para enviar", precio dentro del CTA.
+6. (Feature, decisión del dueño) Tab "Destacados" — requiere campo `destacado` en admin.
+7. Deuda de legibilidad: el "7" de Bangers en precios se lee como "1".
+8. Eventualmente MP real (Cloud Function + token live).
