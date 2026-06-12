@@ -1556,7 +1556,8 @@ window.sendMP = async function() {
   let total = 0;
   const lines = cart.map(item => {
     const p = allProductos.find(x => x.id === item.id); if (!p) return '';
-    const s = p.precio * item.qty; total += s;
+    const base = (p.precio_oferta && p.precio_oferta < p.precio) ? p.precio_oferta : p.precio;
+    const s = base * item.qty; total += s;
     return `• ${p.nombre} x${item.qty} = $${s.toLocaleString('es-AR')}`;
   }).filter(Boolean);
   const note   = document.getElementById('by-note').value.trim();
@@ -1650,8 +1651,10 @@ window.sendWA = async function() {
   let total = 0;
   const lines = cart.map(item => {
     const p = allProductos.find(x => x.id === item.id); if (!p) return '';
-    const s = p.precio * item.qty; total += s;
-    return `• ${p.nombre} x${item.qty} = $${s.toLocaleString('es-AR')}`;
+    const onSale = p.precio_oferta && p.precio_oferta < p.precio;
+    const base = onSale ? p.precio_oferta : p.precio;
+    const s = base * item.qty; total += s;
+    return `• ${p.nombre} x${item.qty} = $${s.toLocaleString('es-AR')}${onSale ? ' (oferta)' : ''}`;
   }).filter(Boolean);
   const totalFinal = selectedPayment === 'transferencia' ? Math.round(total * 0.85) : total;
 
