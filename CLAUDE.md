@@ -135,12 +135,19 @@ Rediseño visual fuerte de la tienda. Se prototipó primero en **`prototipo.html
 
 **Decisión de producto (12/06/2026): NO existe envío gratis como modalidad** — la barra de progreso de envío gratis del prototipo no se migra.
 
-**Pendiente — pulido fase 3 (acercar a `prototipo.html`), por impacto**:
-1. Hero editorial "Ropa con *calle* y cariño" (highlight volt) + CTAs "Ver la colección →" / "Cómo comprar" (hoy: bloque negro con FACHERITOS repetido).
-2. Marquee superior animado en loop (hoy: promo bar estática).
-3. Cards con borde negro grueso + `--shadow-hard` (hoy más suaves).
-4. Tabs de género pills/segmented deslizante (hoy subrayado).
-5. Detalle: fondo oscuro en imagen, label "ELEGÍ EL TALLE", "En stock — listo para enviar", precio dentro del CTA.
-6. (Feature, decisión del dueño) Tab "Destacados" — requiere campo `destacado` en admin.
-7. Deuda de legibilidad: el "7" de Bangers en precios se lee como "1".
-8. Eventualmente MP real (Cloud Function + token live).
+**✅ Pulido fase 3 HECHO (12/06/2026) — LISTO PARA PUSHEAR, NO DEPLOYADO TODAVÍA**:
+
+⚠️ **AL VOLVER: hay trabajo commiteado en `master` LOCAL sin pushear.** Para deployar: `git push origin master` + `git push origin master:main` (regla de deploy). Todo verificado con Playwright contra datos reales en local (0 errores), capturas revisadas.
+
+Lo hecho (commit `d17fa9e` = hero; el resto commiteado al guardar esta sesión):
+1. ✅ **Hero editorial**: "Ropa con ~~CALLE~~ y cariño" (Bangers gigante, highlight volt rotado en CALLE), copy dinámico por sección (bebés 0–6 / teens 6–18), CTAs "Ver la colección →" (volt, scrollea al grid) y "Cómo comprar" (abre sheet nuevo `ov-howto` con 3 pasos: Elegí/Pagá/Recibí — el pill "Alem 634" del hero viejo vive ahí ahora). Marca de agua "F" gigante. Hook `--hero-photo` listo para foto del local (hoy negro pleno). Clases nuevas: `.hero-in`, `.btn-hero`, `.btn-hero-volt`, `.btn-hero-ghost`, `.hero-mark`, `.howto-*`.
+2. ✅ **Ticker marquee**: promo bar estática → `.ticker-track` animado en loop (22s, items duplicados x2 para el loop -50%, volt en datos clave, respeta `prefers-reduced-motion`, altura fija 1 línea = sticky del header estable en `top:33px`).
+3. ✅ **Tabs de género → pills**: activa = pill blanca sólida sobre header negro (proto invertido), press scale .97, scroll-x sin scrollbar si no entran.
+4. ✅ **Detalle**: zona de imagen oscura (`--n-850`, bullets del swiper blancos), label "ELEGÍ EL TALLE" (`.det-label`, solo si hay tags), stock "● En stock (N u.) — listo para enviar", precio dentro del CTA ("Agregar al carrito · $X").
+5. ✅ Cards: ya estaban a la par del prototipo (borde 2px + shadow-hard en hover) — la diferencia visual eran las fotos grayscale del mock. Sin cambios.
+
+**Pendiente después del push**:
+1. (Feature, decisión del dueño) Tab "Destacados" — requiere campo `destacado` en admin.
+2. Deuda de legibilidad: el "7" de Bangers en precios se lee como "1".
+3. Eventualmente MP real (Cloud Function + token live).
+4. **NO migrar nunca** la barra de envío gratis del prototipo (no existe esa modalidad — decisión 12/06/2026).

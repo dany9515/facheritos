@@ -102,27 +102,21 @@ body { font-family: 'Nunito', sans-serif; background: var(--white); color: var(-
 .pg { display: none; }
 .pg.on { display: block; }
 
-/* ── BANNER PROMOCIONAL ── */
+/* ── TICKER PROMOCIONAL (marquee del prototipo) ── */
 .promo-banner {
   background: var(--n-850);
   color: var(--white);
-  padding: 8px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  font-size: var(--fs-sm);
-  font-weight: 700;
-  flex-wrap: wrap;
+  overflow: hidden;
+  white-space: nowrap;
   position: sticky;
   top: 0;
   z-index: var(--z-promo);
   border-bottom: 1px solid var(--n-800);
 }
-.promo-item { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
-.promo-item i { color: var(--volt); font-size: var(--fs-sm); }
-.promo-sep { color: var(--n-750); font-size: var(--fs-lg); }
-@media(max-width: 480px) { .promo-sep { display: none; } .promo-banner { gap: 8px; font-size: var(--fs-xs); } }
+.ticker-track { display: inline-flex; gap: 48px; padding: 9px 0 9px 48px; animation: ticker-scroll 22s linear infinite; will-change: transform; }
+.ticker-track span { font-weight: 900; font-size: var(--fs-xs); letter-spacing: 1.5px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 8px; line-height: 1.4; }
+.ticker-track b { color: var(--volt); }
+@keyframes ticker-scroll { to { transform: translateX(-50%); } }
 
 /* ── SPLASH ── */
 .splash { position: fixed; inset: 0; z-index: var(--z-splash); background: var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; transition: opacity .4s ease; overflow: hidden; }
@@ -156,11 +150,13 @@ body { font-family: 'Nunito', sans-serif; background: var(--white); color: var(-
 .hdr-btn-badge { position: absolute; top: -4px; right: -4px; background: var(--danger); color: var(--white); border-radius: var(--r-full); width: 16px; height: 16px; font-size: var(--fs-xs); font-weight: 900; display: none; align-items: center; justify-content: center; }
 .hdr-btn-badge.on { display: flex; }
 
-/* GÉNERO TABS */
-.gender-bar { display: flex; border-top: 1px solid rgba(255,255,255,.1); }
-.gender-tab { flex: 1; padding: 11px 10px; text-align: center; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: var(--fs-base); color: var(--on-dark-muted); cursor: pointer; background: none; border: none; border-bottom: 2px solid transparent; transition: color var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out); }
-.gender-tab.on { color: var(--white); border-bottom-color: var(--volt); }
-@media(hover:hover) { .gender-tab:hover:not(.on) { color: var(--white); } }
+/* GÉNERO TABS (pills, del prototipo) */
+.gender-bar { display: flex; justify-content: center; gap: 8px; padding: 10px 16px 12px; border-top: 1px solid rgba(255,255,255,.1); overflow-x: auto; scrollbar-width: none; }
+.gender-bar::-webkit-scrollbar { display: none; }
+.gender-tab { flex: 0 0 auto; border: 2px solid rgba(255,255,255,.35); border-radius: var(--r-pill); padding: 7px 14px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: var(--fs-sm); color: var(--on-dark-muted); cursor: pointer; background: none; white-space: nowrap; transition: color var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out), background var(--dur) var(--ease-out); }
+.gender-tab.on { background: var(--white); color: var(--ink); border-color: var(--white); }
+.gender-tab:active { transform: scale(.97); transition-duration: var(--press); }
+@media(hover:hover) { .gender-tab:hover:not(.on) { color: var(--white); border-color: rgba(255,255,255,.7); } }
 
 /* BUSCADOR */
 .search-bar { padding: 10px 16px; background: var(--ink); }
@@ -343,12 +339,13 @@ body { font-family: 'Nunito', sans-serif; background: var(--white); color: var(-
 
 
 /* SWIPER DETALLE */
-.det-swiper { width: 100%; aspect-ratio: 1; border: 2px solid var(--ink); border-radius: var(--r-lg); overflow: hidden; margin-bottom: 16px; background: var(--surface); }
-.det-swiper .swiper-slide { display: flex; align-items: center; justify-content: center; background: var(--surface); }
+.det-swiper { width: 100%; aspect-ratio: 1; border: 2px solid var(--ink); border-radius: var(--r-lg); overflow: hidden; margin-bottom: 16px; background: var(--n-850); }
+.det-swiper .swiper-slide { display: flex; align-items: center; justify-content: center; background: var(--n-850); }
 .det-swiper .swiper-slide img { width: 100%; height: 100%; object-fit: cover; }
 .det-swiper .swiper-slide .emoji { font-size: 80px; }
-.det-swiper .swiper-pagination-bullet { background: var(--ink); }
-.det-swiper .swiper-pagination-bullet-active { background: var(--ink); }
+.det-swiper .swiper-pagination-bullet { background: var(--white); opacity: .5; }
+.det-swiper .swiper-pagination-bullet-active { background: var(--white); opacity: 1; }
+.det-label { font-weight: 900; font-size: var(--fs-xs); letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 9px; }
 
 /* MÉTODOS DE PAGO */
 .pay-methods { background: var(--white); border: 2px solid var(--ink); border-radius: var(--r-lg); padding: 14px; margin-bottom: 16px; }
@@ -519,6 +516,7 @@ textarea.finp { resize: none; min-height: 60px; }
     transition-duration: .001ms !important;
     scroll-behavior: auto !important;
   }
+  .ticker-track { animation: none; }
 }
 </style>
 </head>
@@ -547,13 +545,18 @@ textarea.finp { resize: none; min-height: 60px; }
 <!-- ═══ TIENDA ═══ -->
 <div id="pg-store" class="pg on">
 
-  <!-- BANNER PROMOCIONAL -->
-  <div class="promo-banner">
-    <div class="promo-item"><i class="fa-solid fa-credit-card"></i> 3 y 6 cuotas sin interés</div>
-    <span class="promo-sep">|</span>
-    <div class="promo-item"><i class="fa-solid fa-building-columns"></i> 15% OFF con transferencia</div>
-    <span class="promo-sep">|</span>
-    <div class="promo-item"><i class="fa-solid fa-truck"></i> Retiro en Alem 634 o envío</div>
+  <!-- TICKER PROMOCIONAL -->
+  <div class="promo-banner" aria-hidden="true">
+    <div class="ticker-track">
+      <span>🏦 <b>15% OFF</b> pagando por transferencia</span>
+      <span>💳 Hasta <b>6 cuotas sin interés</b></span>
+      <span>🚚 Retiro en <b>Alem 634</b> o envío</span>
+      <span>🔥 Nueva temporada <b>streetwear kids</b></span>
+      <span>🏦 <b>15% OFF</b> pagando por transferencia</span>
+      <span>💳 Hasta <b>6 cuotas sin interés</b></span>
+      <span>🚚 Retiro en <b>Alem 634</b> o envío</span>
+      <span>🔥 Nueva temporada <b>streetwear kids</b></span>
+    </div>
   </div>
 
   <div class="hdr">
@@ -1340,8 +1343,8 @@ window.openDet = function(id) {
     </div>
     <div class="det-price-transfer"><i class="fa-solid fa-building-columns"></i> $${Number(precioTransfer).toLocaleString('es-AR')} con transferencia · 15% OFF</div>
     ${p.descripcion ? `<div class="det-desc">${esc(p.descripcion)}</div>` : ''}
-    ${tags.length ? `<div class="det-tags">${tags.map(t => `<span class="det-tag">${esc(t.trim())}</span>`).join('')}</div>` : ''}
-    <span class="det-stock ${p.stock > 0 ? 'ok' : 'out'}">${p.stock > 0 ? `✓ En stock (${p.stock} u.)` : '✗ Sin stock'}</span>
+    ${tags.length ? `<div class="det-label">Elegí el talle</div><div class="det-tags">${tags.map(t => `<span class="det-tag">${esc(t.trim())}</span>`).join('')}</div>` : ''}
+    <span class="det-stock ${p.stock > 0 ? 'ok' : 'out'}">${p.stock > 0 ? `● En stock (${p.stock} u.) — listo para enviar` : '✗ Sin stock'}</span>
     <div class="pay-methods">
       <div class="pay-methods-ttl">Medios de pago</div>
       <div class="pay-method">
@@ -1362,7 +1365,7 @@ window.openDet = function(id) {
       </div>
     </div>`;
   document.getElementById('det-ft').innerHTML = p.stock > 0
-    ? `<button class="btn-black" onclick="addCart('${p.id}');closeOv('ov-det')"><i class="fa-solid fa-cart-plus"></i> Agregar al carrito</button>`
+    ? `<button class="btn-black" onclick="addCart('${p.id}');closeOv('ov-det')"><i class="fa-solid fa-cart-plus"></i> Agregar al carrito · $${Number(base).toLocaleString('es-AR')}</button>`
     : `<button class="pay-mp">Sin stock disponible</button>`;
   document.getElementById('ov-det').classList.add('on');
   history.replaceState({}, '', '?producto=' + id);
