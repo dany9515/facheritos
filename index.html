@@ -155,6 +155,8 @@ body { font-family: 'Nunito', sans-serif; background: var(--white); color: var(-
 .gender-bar::-webkit-scrollbar { display: none; }
 .gender-tab { flex: 0 0 auto; border: 2px solid rgba(255,255,255,.35); border-radius: var(--r-pill); padding: 7px 14px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: var(--fs-sm); color: var(--on-dark-muted); cursor: pointer; background: none; white-space: nowrap; transition: color var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out), background var(--dur) var(--ease-out); }
 .gender-tab.on { background: var(--white); color: var(--ink); border-color: var(--white); }
+.gtab-star { border-color: var(--volt); color: var(--volt); }
+.gtab-star.on { background: var(--volt); color: var(--ink); border-color: var(--volt); }
 .gender-tab:active { transform: scale(.97); transition-duration: var(--press); }
 @media(hover:hover) { .gender-tab:hover:not(.on) { color: var(--white); border-color: rgba(255,255,255,.7); } }
 
@@ -584,6 +586,7 @@ textarea.finp { resize: none; min-height: 60px; }
       </div>
     </div>
     <div class="gender-bar">
+      <button class="gender-tab gtab-star" id="gtab-destacados" onclick="toggleDestacados()" style="display:none">★ Destacados</button>
       <button class="gender-tab on" id="gtab-todos" onclick="setGenero('todos')">Todos</button>
       <button class="gender-tab" id="gtab-nino" onclick="setGenero('nino')"><i class="fa-solid fa-mars"></i> Niño</button>
       <button class="gender-tab" id="gtab-nina" onclick="setGenero('nina')"><i class="fa-solid fa-venus"></i> Niña</button>
@@ -977,6 +980,7 @@ let allProductos = [];
 let cart = JSON.parse(localStorage.getItem('fach_cart') || '[]');
 let currentSeccion = localStorage.getItem('fach_seccion') || null;
 let currentGenero = 'todos';
+let soloDestacados = false;
 let selectedCats = new Set();
 let selectedTalles = new Set();
 
@@ -1002,7 +1006,8 @@ window.selectSeccion = function(sec) {
   document.getElementById('sw-teens').classList.toggle('on', sec === 'teens');
   updateHero(sec);
   selectedCats.clear(); selectedTalles.clear();
-  currentGenero = 'todos';
+  currentGenero = 'todos'; soloDestacados = false;
+  document.getElementById('gtab-destacados')?.classList.remove('on');
   updateGenderTabs();
   loadAndRender();
 }
@@ -1178,6 +1183,12 @@ async function loadAndRender() {
       : query(collection(db, 'productos'), where('activo', '==', true));
     const snap = await getDocs(q);
     allProductos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const hayDestacados = allProductos.some(p => p.destacado === true);
+    const starBtn = document.getElementById('gtab-destacados');
+    if (starBtn) {
+      starBtn.style.display = hayDestacados ? '' : 'none';
+      if (!hayDestacados) { soloDestacados = false; starBtn.classList.remove('on'); }
+    }
     buildSidebarFilters();
     applyFilters();
   } catch(e) {
@@ -1210,6 +1221,12 @@ window.setGenero = function(g) {
   currentGenero = g; updateGenderTabs(); applyFilters();
 }
 
+window.toggleDestacados = function() {
+  soloDestacados = !soloDestacados;
+  document.getElementById('gtab-destacados').classList.toggle('on', soloDestacados);
+  applyFilters();
+}
+
 function updateGenderTabs() {
   ['todos','nino','nina','unisex'].forEach(g => {
     document.getElementById('gtab-' + g).classList.toggle('on', g === currentGenero);
@@ -1221,6 +1238,7 @@ window.applyFilters = function() {
   const pMin = parseFloat(document.getElementById('price-min')?.value) || null;
   const pMax = parseFloat(document.getElementById('price-max')?.value) || null;
   let f = allProductos.filter(p => {
+    if (soloDestacados && p.destacado !== true) return false;
     if (currentGenero !== 'todos') {
       if (currentGenero === 'unisex' && p.genero !== 'unisex') return false;
       if (currentGenero !== 'unisex' && p.genero !== currentGenero && p.genero !== 'unisex') return false;
@@ -1246,7 +1264,8 @@ window.applyFilters = function() {
 
 window.clearFilters = function() {
   selectedCats.clear(); selectedTalles.clear();
-  currentGenero = 'todos';
+  currentGenero = 'todos'; soloDestacados = false;
+  document.getElementById('gtab-destacados')?.classList.remove('on');
   ['price-min','price-max','srch'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
   updateGenderTabs(); buildSidebarFilters(); applyFilters(); updateMobileFilterBtns();
 }

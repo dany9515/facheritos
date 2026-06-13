@@ -468,6 +468,10 @@ select.finp{cursor:pointer}
         <div><div class="toggle-nm">Visible en la tienda</div><div class="toggle-desc">Los clientes pueden verlo</div></div>
         <label class="toggle-switch"><input type="checkbox" id="fp-activo" checked><span class="toggle-track"></span><span class="toggle-thumb"></span></label>
       </div>
+      <div class="toggle-row">
+        <div><div class="toggle-nm">⭐ Destacado</div><div class="toggle-desc">Aparece en la pestaña "Destacados" de la tienda</div></div>
+        <label class="toggle-switch"><input type="checkbox" id="fp-destacado"><span class="toggle-track"></span><span class="toggle-thumb"></span></label>
+      </div>
     </div>
 
   </div>
@@ -703,6 +707,7 @@ window.openForm = async function(id) {
   document.getElementById('fp-precio-oferta').value = '';
   document.getElementById('fp-stock').value = '1';
   document.getElementById('fp-activo').checked = true;
+  document.getElementById('fp-destacado').checked = false;
   selectSec('bebes'); selectGen('unisex');
   updateFotosGrid();
 
@@ -720,6 +725,7 @@ window.openForm = async function(id) {
         document.getElementById('fp-desc').value = p.descripcion||'';
         document.getElementById('fp-tags').value = p.tags||'';
         document.getElementById('fp-activo').checked = p.activo!==false;
+        document.getElementById('fp-destacado').checked = p.destacado===true;
         selectSec(p.seccion||'bebes');
         selectGen(p.genero||'unisex');
         // Cargar fotos existentes
@@ -917,6 +923,7 @@ window.saveProd = async function() {
       descripcion: document.getElementById('fp-desc').value.trim(),
       tags: document.getElementById('fp-tags').value.trim(),
       activo: document.getElementById('fp-activo').checked,
+      destacado: document.getElementById('fp-destacado').checked,
       seccion: formSec, genero: formGen,
       foto_url: fotosFinales.length>0 ? fotosFinales[0].url : '',
       foto_path: fotosFinales.length>0 ? fotosFinales[0].path : '',
