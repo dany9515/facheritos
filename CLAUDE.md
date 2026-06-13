@@ -63,7 +63,8 @@ Archivo: `firestore.rules`. Se deployaron con Firebase CLI.
 
 **Auditoría de seguridad (13/06/2026) — hallazgos abiertos** (ver más abajo el detalle de MP):
 - 🔴 El "pago aprobado" de MP se confirma desde URL params en el cliente (`index.html` retorno de MP) → **falsificable**; y el `unit_price`/total se arma en el cliente → **manipulable**. NO se arregla con reglas: requiere la Cloud Function (misma tarea que el token live). Hoy mitigado solo porque MP está en TEST (no mueve plata).
-- 🟡 `foto_url` se interpola sin `esc()` en `src` de `<img>` (riesgo bajo: solo admin escribe productos). 2FA en la cuenta admin recomendado.
+- ✅ `foto_url`/`f.url` ahora pasan por `esc()` en `src` de `<img>` (cerrado 13/06/2026, commit `6e2905b`; `esc()` codifica `&`→`&amp;`, sin cambio funcional). Quedan crudos solo los previews `dataUrl` locales del admin (base64, sin riesgo).
+- 🟡 2FA en la cuenta admin `facheritos@operlog.com.ar` recomendado (acción manual en consola Firebase Auth) — es la llave de toda la tienda.
 
 ## Funcionalidades destacadas
 
