@@ -237,11 +237,21 @@ body { font-family: 'Nunito', sans-serif; background: var(--white); color: var(-
 .prod-card-add.out { background: var(--surface-alt); color: var(--text-faint); border-color: var(--border-strong); cursor: not-allowed; }
 
 
-/* PRECIO TACHADO */
-.prod-card-prices { margin-top: auto; margin-bottom: 10px; }
+/* PRECIO — estilo prototipo: precio grande (Bangers) + pill de transferencia */
+.prod-card-foot { margin-top: auto; margin-bottom: 10px; display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
 .prod-card-price-old { font-size: var(--fs-xs); color: var(--text-faint); text-decoration: line-through; display: block; font-weight: 800; margin-bottom: 1px; }
-.prod-card-price-new { font-family: 'Bangers', cursive; font-size: var(--fs-3xl); color: var(--ink); display: flex; align-items: center; gap: 6px; line-height: .95; }
-.prod-card-discount { background: var(--success-bg); color: var(--success-ink); font-size: 10px; font-weight: 900; padding: 2px 7px; border-radius: var(--r-pill); font-family: 'Nunito', sans-serif; }
+.prod-card-price-now { font-family: 'Bangers', cursive; font-size: var(--fs-3xl); color: var(--ink); line-height: .9; letter-spacing: .5px; }
+.prod-card-transfer { flex-shrink: 0; font-weight: 900; font-size: var(--fs-xs); color: var(--success-ink); background: var(--success-bg); padding: 3px 8px; border-radius: var(--r-pill); white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
+
+/* FEATURE STRIP — panel editorial dentro del grid (estilo prototipo) */
+.prod-feature { grid-column: 1 / -1; border: 2px solid var(--ink); border-radius: var(--r-lg); background: var(--ink); color: var(--white); display: grid; grid-template-columns: 1.1fr 1fr; overflow: hidden; min-height: 220px; }
+.prod-feature-txt { padding: 30px 28px; display: flex; flex-direction: column; justify-content: center; gap: 10px; }
+.prod-feature-k { font-weight: 900; font-size: var(--fs-xs); letter-spacing: 2px; text-transform: uppercase; color: var(--volt); }
+.prod-feature-txt h3 { font-family: 'Bangers', cursive; font-size: clamp(30px, 5vw, 52px); line-height: .9; letter-spacing: .5px; }
+.prod-feature-txt p { color: var(--on-dark-muted); font-weight: 600; font-size: var(--fs-sm); max-width: 380px; }
+.prod-feature-art { position: relative; background: repeating-conic-gradient(from 0deg, #1a1a1a 0deg 90deg, #161616 90deg 180deg) 0 / 40px 40px; display: flex; align-items: center; justify-content: center; }
+.prod-feature-big { font-family: 'Permanent Marker', cursive; font-size: clamp(56px, 12vw, 110px); color: var(--volt); transform: rotate(-6deg); text-align: center; line-height: .8; }
+@media(max-width: 680px) { .prod-feature { grid-template-columns: 1fr; } .prod-feature-art { min-height: 130px; } }
 
 /* EMPTY / LOADING */
 .empty-prods { grid-column: 1/-1; text-align: center; padding: 64px 16px; color: var(--text-faint); }
@@ -459,8 +469,8 @@ textarea.finp { resize: none; min-height: 60px; }
 .st-cancelado { background: var(--danger-bg); color: var(--danger-ink); }
 
 /* TOAST */
-.toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--white); border-radius: var(--r-pill); padding: 11px 22px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: var(--fs-sm); display: none; align-items: center; gap: 8px; z-index: var(--z-toast); white-space: nowrap; box-shadow: var(--shadow-lg); }
-.toast.on { display: flex; }
+.toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--ink); color: var(--white); border: 2px solid var(--volt); border-radius: var(--r-pill); padding: 11px 22px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: var(--fs-sm); display: flex; align-items: center; gap: 9px; z-index: var(--z-toast); white-space: nowrap; box-shadow: var(--shadow-lg); opacity: 0; pointer-events: none; transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-out); }
+.toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 /* SORT */
 .sort-sel { border: 1.5px solid var(--border-strong); border-radius: var(--r-sm); padding: 5px 10px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: var(--fs-sm); color: var(--text-secondary); background: var(--white); outline: none; cursor: pointer; }
@@ -1246,21 +1256,23 @@ function renderGrid(prods) {
     return;
   }
   const genLabels = { nino: 'Niño', nina: 'Niña', unisex: 'Unisex' };
-  g.innerHTML = prods.map(p => {
+  const cards = prods.map(p => {
     const imgHtml = p.foto_url ? `<img src="${p.foto_url}" alt="${esc(p.nombre)}" loading="lazy">` : `<span class="emoji">${p.emoji || '👶'}</span>`;
     const genBadge = p.genero ? `<span class="prod-card-badge">${genLabels[p.genero] || ''}</span>` : '';
     const onSale = p.precio_oferta && p.precio_oferta < p.precio;
     const base = onSale ? p.precio_oferta : p.precio;
     const transfer = Math.round(base * 0.85);
-    const pct = Math.round((1 - transfer / p.precio) * 100);
     return `<div class="prod-card" onclick="openDet('${p.id}')">
       <div class="prod-card-img">${imgHtml}${onSale ? '<span class="prod-card-sale">SALE</span>' : ''}${genBadge}${p.stock === 0 ? '<span class="prod-card-out">Sin stock</span>' : ''}</div>
       <div class="prod-card-body">
         <div class="prod-card-cat">${esc(p.categoria || '')}</div>
         <div class="prod-card-name">${esc(p.nombre)}</div>
-        <div class="prod-card-prices">
-          <span class="prod-card-price-old">$${Number(p.precio).toLocaleString('es-AR')}</span>
-          <span class="prod-card-price-new">$${Number(transfer).toLocaleString('es-AR')} <span class="prod-card-discount">-${pct}%</span></span>
+        <div class="prod-card-foot">
+          <div>
+            ${onSale ? `<span class="prod-card-price-old">$${Number(p.precio).toLocaleString('es-AR')}</span>` : ''}
+            <span class="prod-card-price-now">$${Number(base).toLocaleString('es-AR')}</span>
+          </div>
+          <span class="prod-card-transfer"><i class="fa-solid fa-building-columns"></i> $${Number(transfer).toLocaleString('es-AR')}</span>
         </div>
         <div class="prod-card-footer">
           <button class="prod-card-add ${p.stock === 0 ? 'out' : ''}" onclick="event.stopPropagation();${p.stock > 0 ? `addCart('${p.id}')` : ''}">
@@ -1270,7 +1282,21 @@ function renderGrid(prods) {
         </div>
       </div>
     </div>`;
-  }).join('');
+  });
+  // Feature strip editorial intercalado en el grid (estilo prototipo)
+  if (cards.length > 4) cards.splice(4, 0, featureStripHTML());
+  g.innerHTML = cards.join('');
+}
+
+function featureStripHTML() {
+  return `<div class="prod-feature">
+    <div class="prod-feature-txt">
+      <span class="prod-feature-k">Drop de temporada</span>
+      <h3>Streetwear<br>que crece<br>con ellos</h3>
+      <p>Prendas pensadas para jugar, romper y volver a usar. Calidad que aguanta el ritmo de los más facheros.</p>
+    </div>
+    <div class="prod-feature-art"><div class="prod-feature-big">FACHE</div></div>
+  </div>`;
 }
 
 // ─── FILTROS MOBILE ───
