@@ -665,7 +665,7 @@ async function renderDashboard() {
     const dashStock = document.getElementById('dash-stock');
     const bajos = prods.filter(p=>p.stock<=5);
     dashStock.innerHTML = !bajos.length ? '<div style="padding:16px;text-align:center;color:#bbb;font-size:13px;font-weight:700">✅ Todo el stock está bien</div>' :
-      bajos.map(p => `<div class="mini-row"><div class="mini-av">${p.foto_url?`<img src="${p.foto_url}">`:(p.emoji||'👶')}</div><div class="mini-info"><div class="mini-name">${esc(p.nombre)}</div><div class="mini-sub">${esc(p.categoria)}</div></div><span class="stk ${p.stock===0?'stk-out':'stk-low'}">${p.stock===0?'Sin stock':p.stock+' u.'}</span></div>`).join('');
+      bajos.map(p => `<div class="mini-row"><div class="mini-av">${p.foto_url?`<img src="${esc(p.foto_url)}">`:(p.emoji||'👶')}</div><div class="mini-info"><div class="mini-name">${esc(p.nombre)}</div><div class="mini-sub">${esc(p.categoria)}</div></div><span class="stk ${p.stock===0?'stk-out':'stk-low'}">${p.stock===0?'Sin stock':p.stock+' u.'}</span></div>`).join('');
   } catch(e) {}
 }
 
@@ -692,7 +692,7 @@ window.renderProds = async function renderProds() {
     el.innerHTML = prods.map(p => {
       const [cls,lbl] = p.stock===0?['stk-out','Sin stock']:p.stock<=5?['stk-low',`⚠ ${p.stock} u.`]:['stk-ok',`${p.stock} u.`];
       const sec = p.seccion==='teens'?'👦':'👶';
-      return `<div class="prod-item"><div class="prod-item-img">${p.foto_url?`<img src="${p.foto_url}">`:(p.emoji||'👶')}</div><div class="prod-item-body"><div class="prod-item-cat">${sec} ${esc(p.categoria||'')}</div><div class="prod-item-name">${esc(p.nombre)}</div><div class="prod-item-price">$${Number(p.precio).toLocaleString('es-AR')}</div><div class="prod-item-foot"><span class="stk ${cls}">${lbl}</span><div class="prod-acts"><button class="btn-sec btn-sm" onclick="openForm('${p.id}')">✏ Editar</button><button class="btn-del btn-sm" onclick="confirmDel('${p.id}',${JSON.stringify(p.nombre)},${JSON.stringify(p.foto_path||'')})">🗑</button></div></div></div></div>`;
+      return `<div class="prod-item"><div class="prod-item-img">${p.foto_url?`<img src="${esc(p.foto_url)}">`:(p.emoji||'👶')}</div><div class="prod-item-body"><div class="prod-item-cat">${sec} ${esc(p.categoria||'')}</div><div class="prod-item-name">${esc(p.nombre)}</div><div class="prod-item-price">$${Number(p.precio).toLocaleString('es-AR')}</div><div class="prod-item-foot"><span class="stk ${cls}">${lbl}</span><div class="prod-acts"><button class="btn-sec btn-sm" onclick="openForm('${p.id}')">✏ Editar</button><button class="btn-del btn-sm" onclick="confirmDel('${p.id}',${JSON.stringify(p.nombre)},${JSON.stringify(p.foto_path||'')})">🗑</button></div></div></div></div>`;
     }).join('');
   } catch(e) { el.innerHTML='<div class="empty-state"><div class="ic">❌</div><p>Error al cargar</p></div>'; }
 }

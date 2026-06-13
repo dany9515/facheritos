@@ -1278,7 +1278,7 @@ function renderGrid(prods) {
   }
   const genLabels = { nino: 'Niño', nina: 'Niña', unisex: 'Unisex' };
   const cards = prods.map(p => {
-    const imgHtml = p.foto_url ? `<img src="${p.foto_url}" alt="${esc(p.nombre)}" loading="lazy">` : `<span class="emoji">${p.emoji || '👶'}</span>`;
+    const imgHtml = p.foto_url ? `<img src="${esc(p.foto_url)}" alt="${esc(p.nombre)}" loading="lazy">` : `<span class="emoji">${p.emoji || '👶'}</span>`;
     const genBadge = p.genero ? `<span class="prod-card-badge">${genLabels[p.genero] || ''}</span>` : '';
     const onSale = p.precio_oferta && p.precio_oferta < p.precio;
     const base = onSale ? p.precio_oferta : p.precio;
@@ -1365,9 +1365,9 @@ window.openDet = function(id) {
   // Armar slides - usar fotos[] si hay múltiples, sino foto_url
   let slides = '';
   if (p.fotos && p.fotos.length > 0) {
-    slides = p.fotos.map(f => `<div class="swiper-slide"><img src="${f.url}" alt="${esc(p.nombre)}" loading="lazy" onclick="openZoom(${JSON.stringify(f.url)})" style="cursor:zoom-in"></div>`).join('');
+    slides = p.fotos.map(f => `<div class="swiper-slide"><img src="${esc(f.url)}" alt="${esc(p.nombre)}" loading="lazy" onclick="openZoom(${JSON.stringify(f.url)})" style="cursor:zoom-in"></div>`).join('');
   } else if (p.foto_url) {
-    slides = `<div class="swiper-slide"><img src="${p.foto_url}" alt="${esc(p.nombre)}" onclick="openZoom(${JSON.stringify(p.foto_url)})" style="cursor:zoom-in"></div>`;
+    slides = `<div class="swiper-slide"><img src="${esc(p.foto_url)}" alt="${esc(p.nombre)}" onclick="openZoom(${JSON.stringify(p.foto_url)})" style="cursor:zoom-in"></div>`;
   } else {
     slides = `<div class="swiper-slide"><span class="emoji">${p.emoji || '👶'}</span></div>`;
   }
@@ -1461,7 +1461,7 @@ function renderCartSheet() {
     const p = allProductos.find(x => x.id === item.id); if (!p) return '';
     const base = (p.precio_oferta && p.precio_oferta < p.precio) ? p.precio_oferta : p.precio;
     total += base * item.qty;
-    const imgHtml = p.foto_url ? `<img src="${p.foto_url}">` : p.emoji || '👶';
+    const imgHtml = p.foto_url ? `<img src="${esc(p.foto_url)}">` : p.emoji || '👶';
     return `<div class="ci"><div class="ci-img">${imgHtml}</div><div class="ci-inf"><div class="ci-name">${esc(p.nombre)}</div><div class="ci-price">$${Number(base).toLocaleString('es-AR')}</div><div class="qty-row"><button class="q-btn" onclick="chgQty('${p.id}',-1)">−</button><span class="q-n">${item.qty}</span><button class="q-btn" onclick="chgQty('${p.id}',1)">+</button></div></div><button class="ci-rm" onclick="rmCart('${p.id}')"><i class="fa-solid fa-trash"></i></button></div>`;
   }).join('');
   const isTransfer = selectedPayment === 'transferencia';
