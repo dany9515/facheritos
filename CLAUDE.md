@@ -175,17 +175,52 @@ Nota: la sección **bebés** hoy tiene solo 2 productos → el feature strip no 
 
 ---
 
-## 📌 ESTADO AL CERRAR LA SESIÓN (13/06/2026) — LEER AL VOLVER
+## 📌 ESTADO AL CERRAR LA SESIÓN (13/06/2026, auditoría + emails) — LEER AL VOLVER
 
-**Todo lo de esta sesión está commiteado y pusheado a producción** (ambas ramas, último commit `0c091ce`). No hay trabajo sin guardar. Git status limpio.
+### ✅ Hecho esta sesión (todo commiteado y pusheado)
 
-**La tienda ya está VIVA y operativa** en `facheritos.operlog.com.ar`: navegación, filtros, ★ Destacados, detalle, carrito, y **checkout real por WhatsApp + transferencia (con comprobante)**. El dueño **ya puede vender hoy** por ese flujo. El admin funciona 100%.
+1. **Auditoría de seguridad** (commits `a001db5`, `6e2905b`, `aad9978`):
+   - Firestore endurecido: lista blanca de campos en `pedidos`, validación de tipos/tamaños (anti-spam).
+   - Storage endurecido: leak de comprobantes cerrado (lectura solo dueño/admin), límites tamaño/tipo, `storage.rules` versionado por primera vez.
+   - `foto_url` escapado en `<img src>` (XSS defensa en profundidad).
 
-**Lo ÚNICO que falta para estar 100% completo = pago online con Mercado Pago real** (próxima tarea, acordada para más adelante):
-- Hoy el botón de MP usa un token **de TEST** metido en el cliente (`MP_AT` en `index.html`) → **no cobra plata real**.
-- NO es solo cambiar el token: el token live **no puede ir en el cliente** (se expone). Hay que armar una **Cloud Function** (backend Firebase) que cree la preferencia de pago con el token live del lado servidor.
-- Es trabajo de **backend** (distinto a los cambios visuales recientes). Ver punto 1 de "Seguridad implementada" arriba.
+2. **Cambiar contraseña del admin sin email** (commit `61de171`):
+   - Botón "🔒 Contraseña del panel" en `admin.html` (sección Configuración).
+   - Reautentica con la actual, sin depender del correo (que está roto).
+   - **REGLA: para cambiar la contraseña del admin, NUNCA usar "Recuperar contraseña" por email — usar este botón.**
 
-**Próximo paso cuando se retome**: decidir si se hace MP real. Si sí → Cloud Function + token live + ajustar `sendMP` en `index.html` para llamar a la function en vez de a MP directo.
+3. **Diagnóstico del sistema de correos** (commit en memoria; no tocamos producción):
+   - **Firebase Auth (reset + verificación)**: deshabilitado el SMTP de Zoho → ahora sale desde Firebase (`noreply@facheritos-217ab...`). Pero cae en spam.
+   - **EmailJS (confirmación de pedidos)**: nunca estuvo configurado (los 3 campos en Firestore están vacíos).
+   - **Causa del spam**: correos sin "sellos de confianza" (DKIM/SPF) → Gmail desconfía.
+   - **Solución elegida**: crear un Gmail nuevo para los correos automáticos (gratis, Gmail tiene los sellos puestos por Google).
 
-**Recordatorio de deploy/repo**: pushear SIEMPRE a ambas ramas (`git push origin master && git push origin master:main`) y commitear archivos puntuales, **NUNCA `git add -A`** (hay borrados locales no relevantes que romperían producción).
+### 🔄 Pendiente (sin completar, sesión muy larga)
+
+1. **Configurar Firebase SMTP con el Gmail nuevo** (3 clicks, fácil):
+   - Gmail creado: `facheritostruncado@gmail.com` / `eveynacho26`
+   - 2FA ya activado en ese Gmail (necesario para "contraseñas de aplicación").
+   - **PRÓXIMOS PASOS**:
+     - En Firebase → Authentication → Templates → SMTP:
+       - Host: `smtp.gmail.com` | Puerto: `587` | Usuario: `facheritostruncado@gmail.com` | Contraseña: `eveynacho26` | Seguridad: `STARTTLS`
+     - Guardar y probar reset con una cuenta limpia (debería llegar a bandeja de entrada, no spam).
+   
+2. **Activar EmailJS** (para confirmación de pedidos):
+   - Crear cuenta en **emailjs.com** (gratis).
+   - Conectar Gmail (`facheritostruncado@gmail.com`) como servicio de email.
+   - Pegar Public Key + Service ID + Template ID en el panel (Configuración → Notificaciones por email).
+
+### ℹ️ Contexto importante
+
+- **El comercio sigue operativo**: WhatsApp + transferencia funcionan 100% (sin depender del email).
+- **El email de reset para clientes**: hoy cae en spam (problema de entregabilidad). Solución: configurar el Gmail nuevo arriba.
+- **2FA del admin**: NO se hizo (admin = Zoho, no Google). En su lugar: botón de cambio de contraseña en el panel (seguro, sin email).
+- **Zoho**: sigue existiendo (casilla de trabajo de tu señora). Solo le sacamos la responsabilidad de mandar correos automáticos.
+
+### 🎯 Próximas sesiones
+
+**Urgente (2-3 min)**: completar los 3 clicks de Firebase SMTP con el Gmail nuevo y testear.
+**Después (10-15 min)**: activar EmailJS para que lleguen los emails de confirmación de pedidos.
+**Eventually (big task)**: MP real (Cloud Function + token live) — ver punto 1 de "Seguridad implementada" arriba.
+
+**Recordatorio de deploy**: pushear SIEMPRE a ambas ramas (`git push origin master && git push origin master:main`) y commitear archivos puntuales, **NUNCA `git add -A`**.
