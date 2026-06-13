@@ -135,9 +135,9 @@ Rediseño visual fuerte de la tienda. Se prototipó primero en **`prototipo.html
 
 **Decisión de producto (12/06/2026): NO existe envío gratis como modalidad** — la barra de progreso de envío gratis del prototipo no se migra.
 
-**✅ Pulido fase 3 HECHO (12/06/2026) — LISTO PARA PUSHEAR, NO DEPLOYADO TODAVÍA**:
+**✅ Pulido fase 3 — EN PRODUCCIÓN desde 13/06/2026**:
 
-⚠️ **AL VOLVER: hay trabajo commiteado en `master` LOCAL sin pushear.** Para deployar: `git push origin master` + `git push origin master:main` (regla de deploy). Todo verificado con Playwright contra datos reales en local (0 errores), capturas revisadas.
+Commiteado en `master` y pusheado a ambas ramas (`git push origin master` + `git push origin master:main`) el 13/06/2026 → workflow disparado. Todo verificado con Playwright contra datos reales en local (0 errores), capturas revisadas.
 
 Lo hecho (commit `d17fa9e` = hero; el resto commiteado al guardar esta sesión):
 1. ✅ **Hero editorial**: "Ropa con ~~CALLE~~ y cariño" (Bangers gigante, highlight volt rotado en CALLE), copy dinámico por sección (bebés 0–6 / teens 6–18), CTAs "Ver la colección →" (volt, scrollea al grid) y "Cómo comprar" (abre sheet nuevo `ov-howto` con 3 pasos: Elegí/Pagá/Recibí — el pill "Alem 634" del hero viejo vive ahí ahora). Marca de agua "F" gigante. Hook `--hero-photo` listo para foto del local (hoy negro pleno). Clases nuevas: `.hero-in`, `.btn-hero`, `.btn-hero-volt`, `.btn-hero-ghost`, `.hero-mark`, `.howto-*`.
@@ -146,7 +146,14 @@ Lo hecho (commit `d17fa9e` = hero; el resto commiteado al guardar esta sesión):
 4. ✅ **Detalle**: zona de imagen oscura (`--n-850`, bullets del swiper blancos), label "ELEGÍ EL TALLE" (`.det-label`, solo si hay tags), stock "● En stock (N u.) — listo para enviar", precio dentro del CTA ("Agregar al carrito · $X").
 5. ✅ Cards: ya estaban a la par del prototipo (borde 2px + shadow-hard en hover) — la diferencia visual eran las fotos grayscale del mock. Sin cambios.
 
-**Pendiente después del push**:
+**✅ Paridad con prototipo (13/06/2026 — EN PRODUCCIÓN)**: tres ajustes para acercar el store al `prototipo.html`, verificados con Playwright contra datos reales (0 errores):
+1. **Feature strip** — panel negro editorial ("Drop de temporada / Streetwear que crece con ellos / FACHE" en volt) intercalado en el grid vía `featureStripHTML()`, `splice(4,0,...)` (solo si hay >4 productos). Clases `.prod-feature*`.
+2. **Card estilo prototipo** — precio Bangers grande (`.prod-card-price-now` = precio actual) a la izquierda + pill verde de transferencia (`.prod-card-transfer` = `🏦 $base*0.85`) a la derecha, en `.prod-card-foot`. Se **conservan** los botones Agregar + Compartir (decisión del dueño: no migrar el `+` flotante del proto). Reemplaza el bloque viejo `.prod-card-prices`/`-price-new`/`-discount`.
+3. **Toast** — pill negro con **borde volt** + animación de entrada (opacity/translateY), en vez del `display:none/flex`. Aplica a todos los toasts.
+
+Nota: la sección **bebés** hoy tiene solo 2 productos → el feature strip no aparece ahí (por diseño, necesita >4); en **teens** (15) sí.
+
+**Pendiente**:
 1. (Feature, decisión del dueño) Tab "Destacados" — requiere campo `destacado` en admin.
 2. Deuda de legibilidad: el "7" de Bangers en precios se lee como "1".
 3. Eventualmente MP real (Cloud Function + token live).
