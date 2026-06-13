@@ -155,7 +155,14 @@ Nota: la sección **bebés** hoy tiene solo 2 productos → el feature strip no 
 
 **✅ Fix legibilidad del "7" (13/06/2026 — EN PRODUCCIÓN)**: el "7" de Bangers se confundía con "1" en precios. Enfoque elegido por el dueño: mantener Bangers, agrandar + separar dígitos (NO cambiar a Nunito). Aplicado parejo en los 5 lugares con precio Bangers: `.prod-card-price-now` (28→30px, ls 1.5px), `.det-price` (clamp 44-58px, ls 2px), `.ci-price` (22→24px, ls 1px), `.cart-ttl-num` (36→38px, ls 2px), `.ped-total` (ls 1px). El `letter-spacing` es la palanca real. **Cuidado de layout**: en mobile (<768px, cards 2-col ~171px) el precio grande + pill de transferencia no entraban en una línea → `@media(max-width:767px)` apila el pill debajo (`.prod-card-foot` a `flex-direction:column`); en desktop siguen lado a lado. Verificado con Playwright a 1280px y 390px (0 errores, sin overflow).
 
+**✅ Tab "Destacados" (13/06/2026 — EN PRODUCCIÓN)**: feature de productos destacados.
+- **admin.html**: checkbox "⭐ Destacado" (`fp-destacado`) en la sección Visibilidad, con guardado/carga/reset igual que `activo`. Guarda `destacado: bool` en el producto.
+- **index.html**: pill "★ Destacados" (`#gtab-destacados`, estilo `.gtab-star` volt) al inicio de la `gender-bar`. Estado `soloDestacados`; filtro en `applyFilters` (`p.destacado !== true`); `toggleDestacados()`. El pill **solo se muestra si hay ≥1 producto destacado** en la sección (si no, oculto → no hay tab sin resultados). Resets en `selectSeccion`/`clearFilters`.
+- **firestore.rules**: sin cambios (write solo valida `isAdmin()`).
+- Verificado con Playwright (tienda: wiring del filtro, show/hide del pill, 0 errores; admin: checkbox renderiza).
+
+**Higiene de repo (13/06/2026)**: `.gitignore` ahora ignora tooling local de skills (`.claude/ .agents/ .impeccable/ skills-lock.json`), referencias de diseño locales (`prototipo.html`, `PRODUCT.md`) y temporales (`_*.mjs`, `*.png`). **Regla: commitear archivos puntuales (`git add index.html admin.html ...`), NUNCA `git add -A`** — había borrados locales sin commitear de `sw.js` y `firebase-config.example.js` (restaurados); commitear "todo" los borraría de producción y rompería la PWA del admin.
+
 **Pendiente**:
-1. (Feature, decisión del dueño) Tab "Destacados" — requiere campo `destacado` en admin.
-2. Eventualmente MP real (Cloud Function + token live).
-3. **NO migrar nunca** la barra de envío gratis del prototipo (no existe esa modalidad — decisión 12/06/2026).
+1. Eventualmente MP real (Cloud Function + token live).
+2. **NO migrar nunca** la barra de envío gratis del prototipo (no existe esa modalidad — decisión 12/06/2026).

@@ -1,3 +1,16 @@
 firebase-config.js
 node_modules/
 *.png
+
+# Tooling local de skills (no es parte del sitio)
+.claude/
+.agents/
+.impeccable/
+skills-lock.json
+
+# Referencias de diseño locales (no se deployan)
+prototipo.html
+PRODUCT.md
+
+# Scripts temporales de verificación
+_*.mjs
