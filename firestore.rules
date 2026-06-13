@@ -19,11 +19,35 @@ service cloud.firestore {
 
     // Pedidos
     match /pedidos/{id} {
-      // Crear: permitido para todos, con validacion basica
+      // Crear: permitido para todos (cliente/invitado), con validacion estricta.
+      // Lista blanca de campos + tipos + tamanos para frenar spam, payloads gigantes
+      // e inyeccion de campos arbitrarios. NOTA: los campos mp_* NO se validan como
+      // prueba de pago aca; la confirmacion real de Mercado Pago debe hacerla una
+      // Cloud Function del lado servidor (pendiente). Hoy MP esta en TEST.
       allow create: if request.resource.data.estado == 'nuevo'
+                    // total: numero positivo con tope sano (anti overflow / basura)
                     && request.resource.data.total is number
                     && request.resource.data.total > 0
-                    && request.resource.data.keys().hasAll(['items', 'total', 'estado'])
+                    && request.resource.data.total < 100000000
+                    // items: lista no vacia, acotada
+                    && request.resource.data.items is list
+                    && request.resource.data.items.size() <= 200
+                    // datos del cliente: tipos + tamanos
+                    && request.resource.data.cliente_nombre is string
+                    && request.resource.data.cliente_nombre.size() <= 200
+                    && request.resource.data.metodo_pago in ['transferencia', 'mp']
+                    && (!('nota' in request.resource.data.keys())
+                        || (request.resource.data.nota is string
+                            && request.resource.data.nota.size() <= 2000))
+                    // solo campos conocidos (lista blanca)
+                    && request.resource.data.keys().hasOnly([
+                         'usuario_id', 'es_invitado', 'cliente_nombre', 'cliente_email',
+                         'cliente_telefono', 'cliente_direccion', 'items', 'total',
+                         'metodo_pago', 'estado', 'nota', 'entrega', 'comprobante_url',
+                         'seccion', 'creado', 'mp_preference_id', 'mp_payment_id',
+                         'mp_collection_status'
+                       ])
+                    // un invitado no puede crear pedidos a nombre de otro usuario
                     && (
                          request.resource.data.usuario_id == null
                          || (request.auth != null && request.resource.data.usuario_id == request.auth.uid)

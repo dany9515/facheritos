@@ -1,0 +1,46 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == 'facheritos@operlog.com.ar';
+    }
+
+    // Fotos de productos: lectura publica (las muestra la tienda), escritura solo admin.
+    // El guard (request.resource == null) deja pasar los BORRADOS del admin.
+    match /productos/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin()
+                   && (
+                        request.resource == null
+                        || (
+                             request.resource.size < 10 * 1024 * 1024
+                             && request.resource.contentType.matches('image/.*')
+                           )
+                      );
+    }
+
+    // Comprobantes de transferencia: cada usuario sube SOLO en su carpeta.
+    // Lectura: solo el dueno o el admin (antes lo leia cualquier usuario logueado).
+    match /comprobantes/{userId}/{file} {
+      allow read: if isAdmin() || (request.auth != null && request.auth.uid == userId);
+      allow write: if request.auth != null
+                   && request.auth.uid == userId
+                   && (
+                        request.resource == null
+                        || (
+                             request.resource.size < 20 * 1024 * 1024
+                             && (
+                                  request.resource.contentType.matches('image/.*')
+                                  || request.resource.contentType == 'application/pdf'
+                                )
+                           )
+                      );
+    }
+
+    // Cualquier otra ruta: denegada explicitamente.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
