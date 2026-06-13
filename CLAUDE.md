@@ -153,8 +153,9 @@ Lo hecho (commit `d17fa9e` = hero; el resto commiteado al guardar esta sesión):
 
 Nota: la sección **bebés** hoy tiene solo 2 productos → el feature strip no aparece ahí (por diseño, necesita >4); en **teens** (15) sí.
 
+**✅ Fix legibilidad del "7" (13/06/2026 — EN PRODUCCIÓN)**: el "7" de Bangers se confundía con "1" en precios. Enfoque elegido por el dueño: mantener Bangers, agrandar + separar dígitos (NO cambiar a Nunito). Aplicado parejo en los 5 lugares con precio Bangers: `.prod-card-price-now` (28→30px, ls 1.5px), `.det-price` (clamp 44-58px, ls 2px), `.ci-price` (22→24px, ls 1px), `.cart-ttl-num` (36→38px, ls 2px), `.ped-total` (ls 1px). El `letter-spacing` es la palanca real. **Cuidado de layout**: en mobile (<768px, cards 2-col ~171px) el precio grande + pill de transferencia no entraban en una línea → `@media(max-width:767px)` apila el pill debajo (`.prod-card-foot` a `flex-direction:column`); en desktop siguen lado a lado. Verificado con Playwright a 1280px y 390px (0 errores, sin overflow).
+
 **Pendiente**:
 1. (Feature, decisión del dueño) Tab "Destacados" — requiere campo `destacado` en admin.
-2. Deuda de legibilidad: el "7" de Bangers en precios se lee como "1".
-3. Eventualmente MP real (Cloud Function + token live).
-4. **NO migrar nunca** la barra de envío gratis del prototipo (no existe esa modalidad — decisión 12/06/2026).
+2. Eventualmente MP real (Cloud Function + token live).
+3. **NO migrar nunca** la barra de envío gratis del prototipo (no existe esa modalidad — decisión 12/06/2026).
