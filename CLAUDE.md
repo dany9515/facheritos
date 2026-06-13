@@ -51,14 +51,19 @@ Archivo: `firestore.rules`. Se deployaron con Firebase CLI.
 
 - `productos` y `config`: lectura pública, escritura solo admin.
 - `perfiles/{userId}`: lectura/escritura solo al propio usuario.
-- `pedidos`: creación pública (con validación básica), lectura solo del propio usuario o admin, modificación/eliminación solo admin.
+- `pedidos`: creación pública (con **validación estricta** — lista blanca de campos + tipos/tamaños, desde 13/06/2026), lectura solo del propio usuario o admin, modificación/eliminación solo admin.
 
 ## Seguridad implementada
 
 1. **MP Access Token** → ⚠️ **NO movido (corregido 11/06/2026).** El `index.html` vivo (verificado bajando producción) llama a Mercado Pago **directo con el token en el cliente** (`MP_AT`), y encima es un token **de TEST** (`TEST-...`) → los pagos MP reales no están activos. El comentario "mover a Cloud Function" sigue pendiente de verdad. Producción == repo en esto, así que el rediseño no regresa nada. Tarea aparte para cuando se quieran pagos MP reales (Cloud Function + token live).
-2. **Reglas Firestore** → `firestore.rules` deployado vía CLI.
-3. **API key Firebase** → restringida por dominio en Google Cloud Console (hecho manualmente).
-4. **CSP meta tag** → en `<head>` de `index.html`, restringe scripts, estilos, fuentes, imágenes y conexiones a dominios autorizados.
+2. **Reglas Firestore** → `firestore.rules`. **Endurecidas el 13/06/2026** (auditoría de seguridad): el `create` de `pedidos` ahora usa **lista blanca de campos** (`hasOnly`, 18 campos conocidos) + validación de tipos y tamaños (`total` numérico con tope, `items` lista acotada, `cliente_nombre`/`nota` con largo máximo, `metodo_pago` ∈ {transferencia, mp}). Frena spam, payloads gigantes e inyección de campos arbitrarios. Productos/config/perfiles sin cambios. El usuario las publica desde la consola (no deployar por él).
+3. **Reglas Storage** → `storage.rules` (nuevo, versionado el 13/06/2026; antes vivían solo en la consola). Endurecidas: **comprobantes ya NO los lee cualquier usuario logueado** (solo dueño o admin) — antes había leak de comprobantes bancarios entre clientes; límites de tamaño/tipo en `productos` (10 MB, image/*) y `comprobantes` (20 MB, image/* o PDF); `match /{allPaths=**}` deny explícito. Guard `request.resource == null` para no bloquear los borrados del admin. `firebase.json` ahora declara `storage` además de `firestore`.
+4. **API key Firebase** → restringida por dominio en Google Cloud Console (hecho manualmente).
+5. **CSP meta tag** → en `<head>` de `index.html`, restringe scripts, estilos, fuentes, imágenes y conexiones a dominios autorizados.
+
+**Auditoría de seguridad (13/06/2026) — hallazgos abiertos** (ver más abajo el detalle de MP):
+- 🔴 El "pago aprobado" de MP se confirma desde URL params en el cliente (`index.html` retorno de MP) → **falsificable**; y el `unit_price`/total se arma en el cliente → **manipulable**. NO se arregla con reglas: requiere la Cloud Function (misma tarea que el token live). Hoy mitigado solo porque MP está en TEST (no mueve plata).
+- 🟡 `foto_url` se interpola sin `esc()` en `src` de `<img>` (riesgo bajo: solo admin escribe productos). 2FA en la cuenta admin recomendado.
 
 ## Funcionalidades destacadas
 
