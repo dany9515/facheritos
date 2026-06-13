@@ -395,6 +395,21 @@ select.finp{cursor:pointer}
         </div>
       </div>
       <button class="btn-primary" onclick="saveConfig()">💾 Guardar cambios</button>
+
+      <div class="cfg-card"><h3>🔒 Contraseña del panel</h3>
+        <p style="font-size:0.82rem;color:#888;margin-bottom:14px;line-height:1.5;">Cambiá la contraseña con la que entrás a este panel. Necesitás saber la actual. <strong>No usa email</strong> — no hay riesgo de quedarte afuera.</p>
+        <div class="err-box" id="pw-err" style="display:none"></div>
+        <div class="fld"><label class="flb">Contraseña actual</label>
+          <div class="pass-wrap"><input class="finp" id="pw-cur" type="password" placeholder="••••••••" autocomplete="current-password"><button class="eye-btn" type="button" onclick="togglePass('pw-cur',this)">👁️</button></div>
+        </div>
+        <div class="fld"><label class="flb">Contraseña nueva</label>
+          <div class="pass-wrap"><input class="finp" id="pw-new" type="password" placeholder="mínimo 8 caracteres" autocomplete="new-password"><button class="eye-btn" type="button" onclick="togglePass('pw-new',this)">👁️</button></div>
+        </div>
+        <div class="fld"><label class="flb">Repetir contraseña nueva</label>
+          <div class="pass-wrap"><input class="finp" id="pw-new2" type="password" placeholder="repetí la nueva" autocomplete="new-password"><button class="eye-btn" type="button" onclick="togglePass('pw-new2',this)">👁️</button></div>
+        </div>
+        <button class="btn-primary" onclick="changeAdminPass(this)" id="pw-btn">🔒 Cambiar contraseña</button>
+      </div>
     </div>
 
   </div>
@@ -519,7 +534,7 @@ window.__fbCfg = {
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy, where, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
@@ -1034,6 +1049,39 @@ window.saveConfig = async function() {
     });
     showToast('✅','Configuración guardada');
   } catch(e) { showToast('❌','Error al guardar'); }
+}
+
+// CAMBIAR CONTRASEÑA DEL ADMIN (sin email: reautentica con la actual y actualiza)
+window.changeAdminPass = async function(btn) {
+  const cur = document.getElementById('pw-cur').value;
+  const nw  = document.getElementById('pw-new').value;
+  const nw2 = document.getElementById('pw-new2').value;
+  const err = document.getElementById('pw-err');
+  err.style.display = 'none';
+  const fail = m => { err.textContent = '⚠️ ' + m; err.style.display = 'block'; };
+  if (!cur) return fail('Ingresá tu contraseña actual.');
+  if (nw.length < 8) return fail('La contraseña nueva debe tener al menos 8 caracteres.');
+  if (nw !== nw2) return fail('Las dos contraseñas nuevas no coinciden.');
+  if (nw === cur) return fail('La contraseña nueva tiene que ser distinta a la actual.');
+  const user = auth.currentUser;
+  if (!user) return fail('Se cerró la sesión. Volvé a entrar e intentá de nuevo.');
+  btn.disabled = true; const orig = btn.textContent; btn.textContent = 'Cambiando…';
+  try {
+    // 1) Confirmar identidad con la contraseña actual. Si falla, NO se cambia nada.
+    await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, cur));
+    // 2) Recién ahora se guarda la nueva. Seguís logueado con la nueva.
+    await updatePassword(user, nw);
+    document.getElementById('pw-cur').value = '';
+    document.getElementById('pw-new').value = '';
+    document.getElementById('pw-new2').value = '';
+    showToast('✅','¡Listo! Tu nueva contraseña ya quedó guardada.');
+  } catch(e) {
+    if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') fail('La contraseña actual es incorrecta.');
+    else if (e.code === 'auth/weak-password') fail('La contraseña nueva es muy débil.');
+    else if (e.code === 'auth/too-many-requests') fail('Demasiados intentos. Esperá unos minutos y reintentá.');
+    else fail('No se pudo cambiar la contraseña. Reintentá.');
+  }
+  btn.disabled = false; btn.textContent = orig;
 }
 
 // TOAST
