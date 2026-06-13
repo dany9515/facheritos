@@ -166,3 +166,20 @@ Nota: la sección **bebés** hoy tiene solo 2 productos → el feature strip no 
 **Pendiente**:
 1. Eventualmente MP real (Cloud Function + token live).
 2. **NO migrar nunca** la barra de envío gratis del prototipo (no existe esa modalidad — decisión 12/06/2026).
+
+---
+
+## 📌 ESTADO AL CERRAR LA SESIÓN (13/06/2026) — LEER AL VOLVER
+
+**Todo lo de esta sesión está commiteado y pusheado a producción** (ambas ramas, último commit `0c091ce`). No hay trabajo sin guardar. Git status limpio.
+
+**La tienda ya está VIVA y operativa** en `facheritos.operlog.com.ar`: navegación, filtros, ★ Destacados, detalle, carrito, y **checkout real por WhatsApp + transferencia (con comprobante)**. El dueño **ya puede vender hoy** por ese flujo. El admin funciona 100%.
+
+**Lo ÚNICO que falta para estar 100% completo = pago online con Mercado Pago real** (próxima tarea, acordada para más adelante):
+- Hoy el botón de MP usa un token **de TEST** metido en el cliente (`MP_AT` en `index.html`) → **no cobra plata real**.
+- NO es solo cambiar el token: el token live **no puede ir en el cliente** (se expone). Hay que armar una **Cloud Function** (backend Firebase) que cree la preferencia de pago con el token live del lado servidor.
+- Es trabajo de **backend** (distinto a los cambios visuales recientes). Ver punto 1 de "Seguridad implementada" arriba.
+
+**Próximo paso cuando se retome**: decidir si se hace MP real. Si sí → Cloud Function + token live + ajustar `sendMP` en `index.html` para llamar a la function en vez de a MP directo.
+
+**Recordatorio de deploy/repo**: pushear SIEMPRE a ambas ramas (`git push origin master && git push origin master:main`) y commitear archivos puntuales, **NUNCA `git add -A`** (hay borrados locales no relevantes que romperían producción).
