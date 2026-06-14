@@ -16,7 +16,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FACHERITOS</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👶</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Bangers&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Bangers&family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
@@ -93,6 +93,9 @@
   --z-base:1; --z-nav:100; --z-header:200; --z-promo:201;
   --z-overlay:300; --z-panel:301; --z-sheet:400;
   --z-toast:999; --z-splash:1000; --z-zoom:9999;
+
+  /* Imágenes de fondo */
+  --hero-photo:url('assets/images/hero-photo.jpg');
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -122,7 +125,8 @@ body { font-family: 'Nunito', sans-serif; background: var(--white); color: var(-
 .splash { position: fixed; inset: 0; z-index: var(--z-splash); background: var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; transition: opacity .4s ease; overflow: hidden; }
 .splash.hide { opacity: 0; pointer-events: none; }
 .splash-kicker { display: inline-block; font-weight: 900; font-size: var(--fs-xs); letter-spacing: 3px; text-transform: uppercase; color: var(--ink); background: var(--volt); padding: 6px 14px; border-radius: var(--r-pill); margin-bottom: 22px; }
-.splash-logo { font-family: 'Permanent Marker', cursive; font-size: clamp(52px, 16vw, 78px); line-height: .95; color: var(--white); text-align: center; transform: rotate(-2deg); margin-bottom: 8px; }
+.splash-logo { font-family: 'Fredoka One', sans-serif; font-size: clamp(52px, 16vw, 78px); line-height: .95; color: var(--white); text-align: center; transform: rotate(-2deg); margin-bottom: 8px; font-weight: 900; letter-spacing: 2px; }
+.splash-logo-img { width: clamp(230px, 52vw, 420px); height: auto; margin-bottom: 8px; transform: rotate(-2deg) translateX(-15px); display: block; margin-left: auto; margin-right: auto; filter: invert(1) brightness(1.2); }
 .splash-sub { font-size: var(--fs-xs); color: var(--on-dark-muted); font-weight: 800; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 44px; }
 .splash-question { font-size: var(--fs-md); color: var(--on-dark-muted); font-weight: 800; margin-bottom: 18px; text-align: center; }
 .splash-opts { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 360px; }
@@ -269,7 +273,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--white); color: var(-
 /* ── HERO (editorial, del prototipo) ── */
 /* --hero-photo: foto del local detrás del hero (opcional). Sin definir = solo negro. */
 .hero { background: var(--ink); color: var(--white); position: relative; overflow: hidden; }
-.hero::before { content: ""; position: absolute; inset: 0; z-index: 0; background: linear-gradient(105deg, rgba(17,17,17,.94) 0%, rgba(17,17,17,.74) 46%, rgba(17,17,17,.48) 100%), var(--hero-photo, none) center/cover no-repeat; }
+.hero::before { content: ""; position: absolute; inset: 0; z-index: 0; background: linear-gradient(105deg, rgba(17,17,17,.94) 0%, rgba(17,17,17,.74) 46%, rgba(17,17,17,.48) 100%), var(--hero-photo, none) center 30%/cover no-repeat; }
 .hero-in { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; align-items: flex-start; gap: 18px; padding: 40px 16px 48px; }
 .hero-badge { display: inline-block; background: var(--volt); color: var(--ink); border: none; font-size: var(--fs-xs); font-weight: 900; letter-spacing: 2px; text-transform: uppercase; padding: 6px 14px; border-radius: var(--r-pill); }
 .hero-title { font-family: var(--ff-display); font-size: clamp(54px, 13vw, 110px); color: var(--white); line-height: .85; letter-spacing: 1px; text-transform: uppercase; }
@@ -539,8 +543,8 @@ textarea.finp { resize: none; min-height: 60px; }
 <!-- SPLASH -->
 <div id="splash" class="splash">
   <div class="splash-kicker">Streetwear infantil</div>
-  <div class="splash-logo">FACHERITOS</div>
-  <div class="splash-sub">Calle &amp; cariño</div>
+  <img src="assets/images/F_corona_recortada.png" alt="FACHERITOS" class="splash-logo-img">
+  <div class="splash-sub">Ropa con onda para cada edad</div>
   <div class="splash-question">¿Para quién querés comprar?</div>
   <div class="splash-opts">
     <button class="splash-btn" onclick="selectSeccion('bebes')">
@@ -601,7 +605,7 @@ textarea.finp { resize: none; min-height: 60px; }
     <div class="hero">
       <div class="hero-in">
         <span class="hero-badge" id="hero-badge">👶 Bebés & Niños</span>
-        <h1 class="hero-title">Ropa con <span class="hl">calle</span><br>y cariño</h1>
+        <h1 class="hero-title">Ropa con <span class="hl">onda</span><br>para cada edad</h1>
         <p class="hero-sub" id="hero-sub">Streetwear infantil de verdad. Prendas que les encantan, talles del 0 al 6, y compra sin vueltas por WhatsApp o Mercado Pago.</p>
         <div class="hero-cta">
           <button class="btn-hero btn-hero-volt" onclick="document.querySelector('.mobile-filters').scrollIntoView({behavior:'smooth'})">Ver la colección →</button>
