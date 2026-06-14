@@ -195,32 +195,39 @@ Nota: la sección **bebés** hoy tiene solo 2 productos → el feature strip no 
    - **Causa del spam**: correos sin "sellos de confianza" (DKIM/SPF) → Gmail desconfía.
    - **Solución elegida**: crear un Gmail nuevo para los correos automáticos (gratis, Gmail tiene los sellos puestos por Google).
 
-### 🔄 Pendiente (sin completar, sesión muy larga)
+### ✅ Sesión continuación (13/06/2026 noche) — SMTP + auth reset
 
-1. **Configurar Firebase SMTP con el Gmail nuevo** (3 clicks, fácil):
-   - Gmail creado: `facheritostruncado@gmail.com` / `eveynacho26`
-   - 2FA ya activado en ese Gmail (necesario para "contraseñas de aplicación").
-   - **PRÓXIMOS PASOS**:
-     - En Firebase → Authentication → Templates → SMTP:
-       - Host: `smtp.gmail.com` | Puerto: `587` | Usuario: `facheritostruncado@gmail.com` | Contraseña: `eveynacho26` | Seguridad: `STARTTLS`
-     - Guardar y probar reset con una cuenta limpia (debería llegar a bandeja de entrada, no spam).
-   
-2. **Activar EmailJS** (para confirmación de pedidos):
-   - Crear cuenta en **emailjs.com** (gratis).
-   - Conectar Gmail (`facheritostruncado@gmail.com`) como servicio de email.
-   - Pegar Public Key + Service ID + Template ID en el panel (Configuración → Notificaciones por email).
+**Hecho:**
+1. **Firebase SMTP configurado con Zoho empresarial** (`facheritos@operlog.com.ar`):
+   - Host: `smtp.zoho.com` | Puerto: `587` | Usuario: `facheritos@operlog.com.ar` | Contraseña: `Proteina.` | Seguridad: `TLS`
+   - Zoho: **SPF configurado ✓** + **DKIM configurado y verificado ✓**
+   - Emails de reset llegan a **inbox** (no spam) desde `facheritos@operlog.com.ar`
+   - Dominio autorizado en Firebase: `facheritos.operlog.com.ar` ✓
 
-### ℹ️ Contexto importante
+2. **Fix de bug crítico**: eliminado `import emailjs` de línea 957 que rompía toda la ejecución de JavaScript y hacía que `selectSeccion()` no existiera.
 
-- **El comercio sigue operativo**: WhatsApp + transferencia funcionan 100% (sin depender del email).
-- **El email de reset para clientes**: hoy cae en spam (problema de entregabilidad). Solución: configurar el Gmail nuevo arriba.
-- **2FA del admin**: NO se hizo (admin = Zoho, no Google). En su lugar: botón de cambio de contraseña en el panel (seguro, sin email).
-- **Zoho**: sigue existiendo (casilla de trabajo de tu señora). Solo le sacamos la responsabilidad de mandar correos automáticos.
+### ✅ RESUELTO — Firebase Auth (14/06/2026 sesión actual)
 
-### 🎯 Próximas sesiones
+**Problema**: Links de verificación/reset retornaban error 403 (dominio bloqueado).
 
-**Urgente (2-3 min)**: completar los 3 clicks de Firebase SMTP con el Gmail nuevo y testear.
-**Después (10-15 min)**: activar EmailJS para que lleguen los emails de confirmación de pedidos.
-**Eventually (big task)**: MP real (Cloud Function + token live) — ver punto 1 de "Seguridad implementada" arriba.
+**Solución**: Agregar `https://facheritos-217ab.firebaseapp.com/` a Google Cloud Console → APIs y servicios → Credenciales → API key → Restricciones de sitios web.
+
+**Resultado**: ✅ Verificación de email en nuevas cuentas + reset de contraseña funcionan 100%.
+- Emails llegan a inbox (no spam) desde `facheritos@operlog.com.ar`
+- Links de reset/verificación funcionan
+- Testado en vivo
+
+### 🎯 Pendiente — Solo falta lo crítico
+
+**MP real (Cloud Function + token live)** — ver punto 1 de "Seguridad implementada" arriba.
+- Hoy: pagos MP en TEST (no mueven plata, solo demo)
+- Para ir a producción: Cloud Function + token live + validación del lado del servidor
+- **No es urgente** — la tienda funciona 100% con WhatsApp + transferencia
+
+### ℹ️ Contexto actual
+
+- **Tienda 100% operativa**: Auth + email + checkout + admin + PWA todo funciona.
+- **Comercio sin MP real**: WhatsApp + transferencia (la mayoría de los clientes usa esto de todas formas).
+- **2FA del admin**: Botón "Cambiar contraseña" en panel (funciona sin depender del email).
 
 **Recordatorio de deploy**: pushear SIEMPRE a ambas ramas (`git push origin master && git push origin master:main`) y commitear archivos puntuales, **NUNCA `git add -A`**.
