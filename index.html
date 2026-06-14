@@ -1913,12 +1913,7 @@ window.showToast = function(ic, msg) {
 }
 
 async function init() {
-  if (currentSeccion) {
-    document.getElementById('splash').style.display = 'none';
-    document.getElementById('sw-bebes').classList.toggle('on', currentSeccion === 'bebes');
-    document.getElementById('sw-teens').classList.toggle('on', currentSeccion === 'teens');
-    updateHero(currentSeccion);
-  }
+  // SIEMPRE mostrar el splash para elegir sección, sin importar si ya eligió antes
   await Promise.all([loadAndRender(), loadTiendaConfig()]);
 
   // Procesar URL params
