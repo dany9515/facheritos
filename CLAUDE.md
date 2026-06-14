@@ -234,3 +234,49 @@ Nota: la sección **bebés** hoy tiene solo 2 productos → el feature strip no 
 - **2FA del admin**: Botón "Cambiar contraseña" en panel (funciona sin depender del email).
 
 **Recordatorio de deploy**: pushear SIEMPRE a ambas ramas (`git push origin master && git push origin master:main`) y commitear archivos puntuales, **NUNCA `git add -A`**.
+
+---
+
+## 📌 ESTADO AL CERRAR LA SESIÓN (14/06/2026, rediseño splash + hero)
+
+### ✅ Hecho esta sesión — EN PRODUCCIÓN
+
+1. **Nuevo logo FACHERITOS con F corona** (commit `0535b98`):
+   - Logo diseñado en Canva: "FACHERITOS" con F + corona, estilo graffiti/street art
+   - Guardado como `assets/images/F_corona_recortada.png` (210 KB)
+   - Integrado en el splash (`.splash-logo-img`) con:
+     - `filter: invert(1) brightness(1.2)` para invertir colores (letras negras → blancas)
+     - `width: clamp(230px, 52vw, 420px)` — responsivo
+     - `transform: rotate(-2deg) translateX(-15px)` — rotación + ajuste de posición
+   - **Reemplaza el texto "FACHERITOS" anterior** (Permanent Marker)
+
+2. **Foto del local en el hero**:
+   - Imagen `IMG-20260613-WA0022.jpg` → copiada a `assets/images/hero-photo.jpg` (267 KB)
+   - Variable CSS `--hero-photo:url('assets/images/hero-photo.jpg')` en `:root`
+   - Posicionamiento: `center 30%/cover` — muestra los carteles del local sin cortar
+   - Gradiente overlay mantiene legibilidad del texto (`linear-gradient(105deg, rgba(17,17,17,.94)...`)
+
+3. **Slogan actualizado**:
+   - Splash: "Calle & cariño" → "Ropa con onda para cada edad"
+   - Hero: "Ropa con ~~calle~~ y cariño" → "Ropa con **onda** para cada edad" (onda en highlight volt)
+   - Fuente hero: `clamp(54px, 13vw, 110px)` — tamaño dinámico
+
+### 📦 Archivos nuevos
+- `assets/images/hero-photo.jpg` — Foto del local (267 KB)
+- `assets/images/F_corona_recortada.png` — Logo FACHERITOS (210 KB)
+
+### 🎨 CSS actualizado
+- `.splash-logo-img` — nueva clase para el logo (invert + brightness + transform)
+- `--hero-photo` — nueva variable en `:root` para el background del hero
+- `.hero::before` — posicionamiento cambiado a `center 30%/cover` (antes `center/cover`)
+- Fuente splash-logo cambió a `'Fredoka One'` (antes `'Permanent Marker'`) — mantenida para compatibilidad
+
+### ✅ Verificado
+- Splash: logo visible, bien posicionado, colores correctos
+- Hero: foto visible, carteles del local se ven, texto legible
+- Responsivo: testeado en local con `http://127.0.0.1:5500/` (servidor http-server puerto 5500)
+- Deploy: pusheado a `master` y `master:main` (workflow disparado)
+
+### 🎯 Próximos pasos
+- Verifica que la tienda esté viva en `facheritos.operlog.com.ar` (deploy debería completarse en ~2 min)
+- **MP real** sigue pendiente (Cloud Function + token live) — no crítico, tienda funciona 100% con WhatsApp + transferencia
