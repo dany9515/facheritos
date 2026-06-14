@@ -126,7 +126,8 @@ body { font-family: 'Nunito', sans-serif; background: var(--white); color: var(-
 .splash.hide { opacity: 0; pointer-events: none; }
 .splash-kicker { display: inline-block; font-weight: 900; font-size: var(--fs-xs); letter-spacing: 3px; text-transform: uppercase; color: var(--ink); background: var(--volt); padding: 6px 14px; border-radius: var(--r-pill); margin-bottom: 22px; }
 .splash-logo { font-family: 'Fredoka One', sans-serif; font-size: clamp(52px, 16vw, 78px); line-height: .95; color: var(--white); text-align: center; transform: rotate(-2deg); margin-bottom: 8px; font-weight: 900; letter-spacing: 2px; }
-.splash-logo-img { width: clamp(230px, 52vw, 420px); height: auto; margin-bottom: 8px; transform: rotate(-2deg) translateX(-15px); display: block; margin-left: auto; margin-right: auto; filter: invert(1) brightness(1.2); }
+.splash-logo-img { width: clamp(180px, 50vw, 420px); height: auto; margin-bottom: 8px; transform: rotate(-2deg) translateX(-15px); display: block; margin-left: auto; margin-right: auto; filter: invert(1) brightness(1.2); }
+@media(max-width: 480px) { .splash-logo-img { width: clamp(160px, 75vw, 280px); transform: rotate(-2deg); } }
 .splash-sub { font-size: var(--fs-xs); color: var(--on-dark-muted); font-weight: 800; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 44px; }
 .splash-question { font-size: var(--fs-md); color: var(--on-dark-muted); font-weight: 800; margin-bottom: 18px; text-align: center; }
 .splash-opts { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 360px; }
