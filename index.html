@@ -127,7 +127,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--white); color: var(-
 .splash-kicker { display: inline-block; font-weight: 900; font-size: var(--fs-xs); letter-spacing: 3px; text-transform: uppercase; color: var(--ink); background: var(--volt); padding: 6px 14px; border-radius: var(--r-pill); margin-bottom: 22px; }
 .splash-logo { font-family: 'Fredoka One', sans-serif; font-size: clamp(52px, 16vw, 78px); line-height: .95; color: var(--white); text-align: center; transform: rotate(-2deg); margin-bottom: 8px; font-weight: 900; letter-spacing: 2px; }
 .splash-logo-img { width: clamp(180px, 50vw, 420px); height: auto; margin-bottom: 8px; transform: rotate(-2deg) translateX(-15px); display: block; margin-left: auto; margin-right: auto; filter: invert(1) brightness(1.2); }
-@media(max-width: 480px) { .splash-logo-img { width: clamp(180px, 80vw, 320px); transform: rotate(-2deg); } }
+@media(max-width: 480px) { .splash-logo-img { width: clamp(190px, 82vw, 350px); transform: rotate(-2deg) translateX(-15px); } }
 .splash-sub { font-size: var(--fs-xs); color: var(--on-dark-muted); font-weight: 800; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 44px; }
 .splash-question { font-size: var(--fs-md); color: var(--on-dark-muted); font-weight: 800; margin-bottom: 18px; text-align: center; }
 .splash-opts { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 360px; }
@@ -313,6 +313,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--white); color: var(-
 /* ── FOOTER ── */
 .store-footer { background: var(--ink); color: rgba(255,255,255,.7); text-align: center; padding: 32px 20px 20px; margin-top: 8px; }
 .footer-brand { font-family: 'Permanent Marker', cursive; font-size: var(--fs-3xl); color: var(--white); margin-bottom: 4px; }
+.footer-brand-img { width: clamp(140px, 38vw, 260px); height: auto; margin-bottom: 4px; display: block; margin-left: auto; margin-right: auto; filter: invert(1) brightness(1.2); transform: translateX(-12px); }
 .footer-tagline { font-size: var(--fs-sm); font-weight: 700; color: var(--on-dark-muted); letter-spacing: 1px; margin-bottom: 20px; }
 .footer-social { display: flex; justify-content: center; gap: 16px; margin-bottom: 20px; }
 .social-link { display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; border-radius: var(--r-lg); background: rgba(255,255,255,.1); color: var(--white); font-size: var(--fs-xl); text-decoration: none; transition: background .2s, transform .15s; }
@@ -664,7 +665,7 @@ textarea.finp { resize: none; min-height: 60px; }
 
     <!-- FOOTER -->
     <footer class="store-footer">
-      <div class="footer-brand">FACHERITOS</div>
+      <img src="assets/images/F_corona_recortada.png" alt="FACHERITOS" class="footer-brand-img">
       <div class="footer-tagline">Ropa y accesorios para los más chicos</div>
       <div class="footer-social">
         <a href="https://www.facebook.com/facheritos.kids.595948" target="_blank" rel="noopener noreferrer" class="social-link fb" aria-label="Facebook">
