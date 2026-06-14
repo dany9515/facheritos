@@ -1112,7 +1112,7 @@ window.doRegister = async function() {
     okEl.textContent = '✅ ¡Cuenta creada! Revisá tu email para verificarla.';
     okEl.style.display = 'block';
     showToast('✅', '¡Bienvenido/a! Verificá tu email');
-    setTimeout(() => goPage('profile'), 2000);
+    // onAuthStateChanged va a redirigir a pg-verify-email automáticamente
   } catch(e) {
     errEl.textContent = e.code === 'auth/email-already-in-use' ? '⚠️ Email ya registrado' : '⚠️ Error al crear la cuenta';
     errEl.style.display = 'block';
