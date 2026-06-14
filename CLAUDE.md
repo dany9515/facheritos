@@ -272,11 +272,21 @@ Nota: la sección **bebés** hoy tiene solo 2 productos → el feature strip no 
 - Fuente splash-logo cambió a `'Fredoka One'` (antes `'Permanent Marker'`) — mantenida para compatibilidad
 
 ### ✅ Verificado
-- Splash: logo visible, bien posicionado, colores correctos
+- Splash: logo visible, bien posicionado, colores correctos (splash-logo-img)
+- Footer: logo integrado con tamaño responsivo (footer-brand-img)
 - Hero: foto visible, carteles del local se ven, texto legible
 - Responsivo: testeado en local con `http://127.0.0.1:5500/` (servidor http-server puerto 5500)
-- Deploy: pusheado a `master` y `master:main` (workflow disparado)
+- Mobile: splash logo `clamp(190px, 82vw, 350px)` + `translateX(-15px)`; footer logo `clamp(140px, 38vw, 260px)` + `translateX(-12px)`
+- Desktop: splash logo `clamp(230px, 50vw, 420px)` + `translateX(-15px)`; footer logo responsivo
 
-### 🎯 Próximos pasos
-- Verifica que la tienda esté viva en `facheritos.operlog.com.ar` (deploy debería completarse en ~2 min)
+### ✅ Commits finales (14/06/2026)
+- `0535b98`: feat: nuevo logo FACHERITOS con F corona + hero con foto del local
+- `fb49806`: assets: agregar logo FACHERITOS con F corona (forzado con -f)
+- `207fd02`: fix: aumentar tamaño del logo en mobile — 320px max
+- `1c056c5`: feat: logo FACHERITOS con F corona en footer — ajustes de tamaño y posición
+
+### 🎯 ESTADO FINAL
+- ✅ **EN PRODUCCIÓN**: Logo FACHERITOS con F corona en splash + footer, foto del local en hero, slogan "Ropa con onda para cada edad"
+- ✅ **Tienda 100% operativa**: Auth + email + checkout + admin + splash + hero + productos + footer — todo funciona
+- 🔄 **Workflow completado**: Deploy a GitHub Pages automático via GitHub Actions
 - **MP real** sigue pendiente (Cloud Function + token live) — no crítico, tienda funciona 100% con WhatsApp + transferencia
