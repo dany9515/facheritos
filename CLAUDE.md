@@ -206,16 +206,19 @@ Nota: la sección **bebés** hoy tiene solo 2 productos → el feature strip no 
 
 2. **Fix de bug crítico**: eliminado `import emailjs` de línea 957 que rompía toda la ejecución de JavaScript y hacía que `selectSeccion()` no existiera.
 
-### ✅ RESUELTO — Firebase Auth (14/06/2026 sesión actual)
+### ✅ COMPLETO — Auth + Email (14/06/2026 sesión actual)
 
-**Problema**: Links de verificación/reset retornaban error 403 (dominio bloqueado).
+**Problemas resueltos:**
+1. Links de verificación/reset retornaban error 403 (dominio bloqueado) → **Solución**: agregar `https://facheritos-217ab.firebaseapp.com/` a Google Cloud Console
+2. **Feature nueva**: Verificación obligatoria de email antes de acceder a la tienda
 
-**Solución**: Agregar `https://facheritos-217ab.firebaseapp.com/` a Google Cloud Console → APIs y servicios → Credenciales → API key → Restricciones de sitios web.
-
-**Resultado**: ✅ Verificación de email en nuevas cuentas + reset de contraseña funcionan 100%.
-- Emails llegan a inbox (no spam) desde `facheritos@operlog.com.ar`
-- Links de reset/verificación funcionan
-- Testado en vivo
+**Estado 100% funcional:**
+- ✅ Registro con validación (8+ caracteres, ≥1 número)
+- ✅ Email de verificación llega a inbox (no spam)
+- ✅ Bloqueo de acceso sin verificar → página `pg-verify-email` con "Reenviar email"
+- ✅ Reset de contraseña funciona
+- ✅ Splash screen siempre pide elegir sección (bebés/adolescentes)
+- ✅ Cambio de contraseña en admin sin depender del email
 
 ### 🎯 Pendiente — Solo falta lo crítico
 
