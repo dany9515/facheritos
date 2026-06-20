@@ -305,6 +305,12 @@ body { font-family: 'Nunito', sans-serif; background: var(--white); color: var(-
 .howto-ttl { font-family: var(--ff-display); font-size: var(--fs-xl); letter-spacing: 1px; margin-bottom: 2px; }
 .howto-tx { font-size: var(--fs-base); font-weight: 600; color: var(--text-secondary); }
 
+/* Sobre nosotros (sheet) */
+.about-img { width: 100%; aspect-ratio: 1; border: 2px solid var(--ink); border-radius: var(--r-lg); background: var(--surface); overflow: hidden; margin-bottom: var(--sp-4); display: flex; align-items: center; justify-content: center; }
+.about-img img { width: 100%; height: 100%; object-fit: cover; }
+.about-paragraph { font-size: var(--fs-base); font-weight: 600; color: var(--text-secondary); line-height: 1.7; margin-bottom: var(--sp-4); text-align: left; }
+.about-paragraph:last-child { margin-bottom: 0; }
+
 /* ── BOTTOM NAV ── */
 .bnav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--ink); display: flex; border-top: 1px solid var(--n-850); z-index: var(--z-nav); }
 .bnav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 4px 8px; cursor: pointer; color: var(--on-dark-muted); font-size: var(--fs-xs); font-weight: 800; letter-spacing: .5px; text-transform: uppercase; gap: 3px; border: none; background: none; }
@@ -327,6 +333,8 @@ body { font-family: 'Nunito', sans-serif; background: var(--white); color: var(-
 .social-link { display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; border-radius: var(--r-lg); background: rgba(255,255,255,.1); color: var(--white); font-size: var(--fs-xl); text-decoration: none; transition: background .2s, transform .15s; }
 .social-link:active { transform: scale(.93); }
 @media(hover:hover) { .social-link:hover { transform: translateY(-2px); } .social-link.fb:hover { background:var(--facebook); } .social-link.ig:hover { background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); } .social-link.tt:hover { background:#010101; outline:1px solid rgba(255,255,255,.15); } }
+.footer-link { background: none; border: none; color: var(--on-dark-muted); font-size: var(--fs-sm); font-weight: 700; cursor: pointer; text-decoration: underline; margin-bottom: var(--sp-3); padding: 0; transition: color var(--dur) var(--ease-out); }
+@media(hover:hover) { .footer-link:hover { color: var(--white); } }
 .footer-copy { font-size: var(--fs-xs); color: var(--on-dark-muted); font-weight: 700; }
 
 /* ── SHEETS ── */
@@ -686,6 +694,7 @@ textarea.finp { resize: none; min-height: 60px; }
           <i class="fa-brands fa-tiktok"></i>
         </a>
       </div>
+      <button class="footer-link" onclick="document.getElementById('ov-about').classList.add('on')">Sobre nosotros</button>
       <div class="footer-copy">© 2025 Facheritos · Todos los derechos reservados</div>
     </footer>
   </div>
@@ -850,6 +859,21 @@ textarea.finp { resize: none; min-height: 60px; }
         <div><div class="howto-ttl">3. Recibí</div><div class="howto-tx">Retirás por <b>Alem 634</b> o te lo enviamos a donde estés.</div></div>
       </div>
       <button class="btn-hero btn-hero-volt" style="width:100%;justify-content:center;margin-top:16px" onclick="closeOv('ov-howto');document.querySelector('.mobile-filters').scrollIntoView({behavior:'smooth'})">Empezar a comprar →</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET SOBRE NOSOTROS -->
+<div class="ov" id="ov-about" onclick="if(event.target===this)closeOv('ov-about')">
+  <div class="sheet">
+    <div class="sheet-pull"></div>
+    <div class="sheet-hd"><div class="sheet-ttl">Sobre nosotros</div><button class="x-btn" onclick="closeOv('ov-about')">×</button></div>
+    <div class="sheet-bd">
+      <div class="about-img"><img src="assets/images/eve-y-nacho.jpg" alt="Eve y Nacho" loading="lazy"></div>
+      <div class="about-paragraph">Todo comenzó en pandemia, en un momento de incertidumbre, pero también de muchos sueños. Estábamos por casarnos, queríamos construir nuestro hogar y sabíamos que teníamos que esforzarnos para lograrlo. Así nació este emprendimiento: con unas pocas prendas de bebé, muchas ganas de salir adelante y una fe inmensa en que Dios abriría el camino.</div>
+      <div class="about-paragraph">Hubo días de recorrer casa por casa, de preparar pedidos hasta tarde y de volver a empezar cuando las cosas no salieron como esperábamos. También hubo momentos difíciles, puertas que se cerraron y desafíos que parecían imposibles. Pero nunca dejamos de creer ni de trabajar.</div>
+      <div class="about-paragraph">Hoy, mirando hacia atrás, nos emociona ver todo lo que hemos construido. Lo que empezó como un pequeño sueño de una pareja que quería salir adelante, hoy son dos locales llenos de historias, familias y niños que crecen junto a nosotros.</div>
+      <div class="about-paragraph">Gracias por acompañarnos en este camino. Detrás de cada prenda hay esfuerzo, amor y la convicción de que, con fe y perseverancia, los sueños pueden hacerse realidad.</div>
     </div>
   </div>
 </div>
