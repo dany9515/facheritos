@@ -16,7 +16,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FACHERITOS</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👶</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Bangers&family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Bangers&family=Fredoka+One&family=Comfortaa:wght@400;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
@@ -311,6 +311,16 @@ body { font-family: 'Nunito', sans-serif; background: var(--white); color: var(-
 .about-paragraph { font-size: var(--fs-base); font-weight: 600; color: var(--text-secondary); line-height: 1.7; margin-bottom: var(--sp-4); text-align: left; }
 .about-paragraph:last-child { margin-bottom: 0; }
 
+/* Sobre nosotros (página) */
+#pg-about { background: #f5f5f5; }
+.about-header { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; padding: var(--sp-5) var(--sp-4); background: linear-gradient(135deg, var(--volt) 0%, rgba(232, 255, 0, 0.8) 100%); border-radius: 0; }
+.about-title { font-family: 'Bangers', cursive; font-size: clamp(40px, 10vw, 72px); letter-spacing: 3px; font-weight: 400; color: var(--ink); }
+.about-page-content { display: flex; flex-direction: column; gap: var(--sp-5); padding: var(--sp-5) var(--sp-4); background: white; margin: 0 var(--sp-4) var(--sp-4); border-radius: var(--r-lg); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+.about-page-img { width: clamp(200px, 90%, 420px); max-height: 420px; aspect-ratio: 1; border: 4px solid var(--ink); border-radius: var(--r-lg); margin: 0 auto var(--sp-3); display: block; object-fit: cover; box-shadow: var(--shadow-lg); }
+.about-page-text { display: flex; flex-direction: column; gap: var(--sp-5); }
+.about-paragraph { font-family: 'Comfortaa', sans-serif; font-size: 15px; font-weight: 400; color: #333; line-height: 1.8; text-align: left; }
+.about-location { font-size: clamp(18px, 5vw, 22px); font-weight: 700; color: var(--ink); text-align: center; padding: var(--sp-5); background: rgba(232, 255, 0, 0.25); border: 3px solid var(--volt); border-radius: var(--r-md); margin-top: var(--sp-3); letter-spacing: 1px; font-family: 'Bangers', cursive; }
+
 /* ── BOTTOM NAV ── */
 .bnav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--ink); display: flex; border-top: 1px solid var(--n-850); z-index: var(--z-nav); }
 .bnav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 4px 8px; cursor: pointer; color: var(--on-dark-muted); font-size: var(--fs-xs); font-weight: 800; letter-spacing: .5px; text-transform: uppercase; gap: 3px; border: none; background: none; }
@@ -335,6 +345,8 @@ body { font-family: 'Nunito', sans-serif; background: var(--white); color: var(-
 @media(hover:hover) { .social-link:hover { transform: translateY(-2px); } .social-link.fb:hover { background:var(--facebook); } .social-link.ig:hover { background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); } .social-link.tt:hover { background:#010101; outline:1px solid rgba(255,255,255,.15); } }
 .footer-link { background: none; border: none; color: var(--on-dark-muted); font-size: var(--fs-sm); font-weight: 700; cursor: pointer; text-decoration: underline; margin-bottom: var(--sp-3); padding: 0; transition: color var(--dur) var(--ease-out); }
 @media(hover:hover) { .footer-link:hover { color: var(--white); } }
+.footer-about-btn { background: rgba(232, 255, 0, 0.15); border: 2px solid var(--volt); color: var(--white); font-family: 'Bangers', cursive; font-size: clamp(18px, 5vw, 24px); font-weight: 400; letter-spacing: 1px; cursor: pointer; padding: var(--sp-3) var(--sp-4); border-radius: var(--r-md); margin: var(--sp-4) 0; display: inline-block; transition: background var(--dur) var(--ease-out), transform var(--dur) var(--ease-out); }
+@media(hover:hover) { .footer-about-btn:hover { background: rgba(232, 255, 0, 0.3); transform: scale(1.05); } }
 .footer-copy { font-size: var(--fs-xs); color: var(--on-dark-muted); font-weight: 700; }
 
 /* ── SHEETS ── */
@@ -694,7 +706,7 @@ textarea.finp { resize: none; min-height: 60px; }
           <i class="fa-brands fa-tiktok"></i>
         </a>
       </div>
-      <button class="footer-link" onclick="document.getElementById('ov-about').classList.add('on')">Sobre nosotros</button>
+      <button class="footer-about-btn" onclick="goPage('about')">❤️ Sobre nosotros</button>
       <div class="footer-copy">© 2025 Facheritos · Todos los derechos reservados</div>
     </footer>
   </div>
@@ -830,6 +842,26 @@ textarea.finp { resize: none; min-height: 60px; }
   </div>
 </div>
 
+<!-- PÁGINA SOBRE NOSOTROS -->
+<div id="pg-about" class="pg">
+  <div class="profile-page">
+    <div class="about-header">
+      <button class="btn-gray btn-sm" onclick="goPage('store')">← Volver</button>
+      <div class="about-title">Sobre nosotros</div>
+    </div>
+    <div class="about-page-content">
+      <img src="assets/images/eve-y-nacho.jpg" alt="Eve y Nacho, founders" class="about-page-img" loading="lazy">
+      <div class="about-page-text">
+        <div class="about-paragraph">Todo comenzó en pandemia, en un momento de incertidumbre, pero también de muchos sueños. Estábamos por casarnos, queríamos construir nuestro hogar y sabíamos que teníamos que esforzarnos para lograrlo. Así nació este emprendimiento: con unas pocas prendas de bebé, muchas ganas de salir adelante y una fe inmensa en que Dios abriría el camino.</div>
+        <div class="about-paragraph">Hubo días de recorrer casa por casa, de preparar pedidos hasta tarde y de volver a empezar cuando las cosas no salieron como esperábamos. También hubo momentos difíciles, puertas que se cerraron y desafíos que parecían imposibles. Pero nunca dejamos de creer ni de trabajar.</div>
+        <div class="about-paragraph">Hoy, mirando hacia atrás, nos emociona ver todo lo que hemos construido. Lo que empezó como un pequeño sueño de una pareja que quería salir adelante, hoy son dos locales llenos de historias, familias y niños que crecen junto a nosotros.</div>
+        <div class="about-paragraph">Gracias por acompañarnos en este camino. Detrás de cada prenda hay esfuerzo, amor y la convicción de que, con fe y perseverancia, los sueños pueden hacerse realidad.</div>
+        <div class="about-location">📍 Pico Truncado, Santa Cruz, Argentina</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- SHEET DETALLE -->
 <div class="ov" id="ov-det" onclick="if(event.target===this)closeOv('ov-det')">
   <div class="sheet">
@@ -863,20 +895,17 @@ textarea.finp { resize: none; min-height: 60px; }
   </div>
 </div>
 
-<!-- SHEET SOBRE NOSOTROS -->
-<div class="ov" id="ov-about" onclick="if(event.target===this)closeOv('ov-about')">
+<!-- SHEET SOBRE NOSOTROS (DEPRECATED — migrado a página) -->
+<!-- <div class="ov" id="ov-about" onclick="if(event.target===this)closeOv('ov-about')">
   <div class="sheet">
     <div class="sheet-pull"></div>
     <div class="sheet-hd"><div class="sheet-ttl">Sobre nosotros</div><button class="x-btn" onclick="closeOv('ov-about')">×</button></div>
     <div class="sheet-bd">
       <div class="about-img"><img src="assets/images/eve-y-nacho.jpg" alt="Eve y Nacho" loading="lazy"></div>
-      <div class="about-paragraph">Todo comenzó en pandemia, en un momento de incertidumbre, pero también de muchos sueños. Estábamos por casarnos, queríamos construir nuestro hogar y sabíamos que teníamos que esforzarnos para lograrlo. Así nació este emprendimiento: con unas pocas prendas de bebé, muchas ganas de salir adelante y una fe inmensa en que Dios abriría el camino.</div>
-      <div class="about-paragraph">Hubo días de recorrer casa por casa, de preparar pedidos hasta tarde y de volver a empezar cuando las cosas no salieron como esperábamos. También hubo momentos difíciles, puertas que se cerraron y desafíos que parecían imposibles. Pero nunca dejamos de creer ni de trabajar.</div>
-      <div class="about-paragraph">Hoy, mirando hacia atrás, nos emociona ver todo lo que hemos construido. Lo que empezó como un pequeño sueño de una pareja que quería salir adelante, hoy son dos locales llenos de historias, familias y niños que crecen junto a nosotros.</div>
-      <div class="about-paragraph">Gracias por acompañarnos en este camino. Detrás de cada prenda hay esfuerzo, amor y la convicción de que, con fe y perseverancia, los sueños pueden hacerse realidad.</div>
+      <div class="about-paragraph">Todo comenzó en pandemia...</div>
     </div>
   </div>
-</div>
+</div> -->
 
 <!-- SHEET CARRITO -->
 <div class="ov" id="ov-cart" onclick="if(event.target===this)closeOv('ov-cart')">
