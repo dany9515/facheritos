@@ -290,3 +290,136 @@ Nota: la sección **bebés** hoy tiene solo 2 productos → el feature strip no 
 - ✅ **Tienda 100% operativa**: Auth + email + checkout + admin + splash + hero + productos + footer — todo funciona
 - 🔄 **Workflow completado**: Deploy a GitHub Pages automático via GitHub Actions
 - **MP real** sigue pendiente (Cloud Function + token live) — no crítico, tienda funciona 100% con WhatsApp + transferencia
+
+---
+
+## 📌 ESTADO AL CERRAR LA SESIÓN (20/06/2026, polish + sobre nosotros)
+
+### ✅ POLISH COMPLETADO — Audit 14/20 → 18/20 (Excellent)
+
+**Typography Refinement:**
+- Creados 7 tokens `--fs-display-*` para off-scale clamps (name, price, auth, splash, hero, feature, feature-big)
+- Reemplazadas 7 clases CSS que usaban `clamp()` literal → tokens:
+  - `.splash-logo` → `--fs-display-splash`
+  - `.auth-logo` → `--fs-display-auth`
+  - `.det-name` → `--fs-display-name`
+  - `.det-price` → `--fs-display-price`
+  - `.hero-title` → `--fs-display-hero`
+  - `.prod-feature-txt h3` → `--fs-display-feature`
+  - `.prod-feature-big` → `--fs-display-feature-big`
+
+**Spacing System:**
+- Migradas docenas de valores literal de spacing a `--sp-*`:
+  - `margin-bottom: 12px` → `--sp-3` (todos)
+  - `margin-bottom: 16px` → `--sp-4`
+  - `margin-bottom: 20px` → `--sp-5`
+  - `margin-bottom: 8px` → `--sp-2`
+  - `margin-bottom: 22px` → `--sp-5`
+  - `margin-bottom: 44px` → `--sp-10`
+  - `padding: 16px` → `--sp-4` (donde aplicaba)
+
+**Motion Standardization:**
+- `.splash { transition: opacity .4s ease }` → `opacity var(--dur-slow) var(--ease-out)`
+
+**Accessibility (Keyboard Navigation):**
+- Hecho focuseable `.delivery-opt` (4 toggles: pago + envío):
+  - Agregado `tabindex="0"` + `role="button"` + `aria-pressed` a toggles
+  - Agregado handlers `onkeydown` para Enter/Space
+  - Actualizado `setPayment()` y `setDelivery()` para sincronizar `aria-pressed` dinámicamente
+
+**Performance:**
+- Agregado `loading="lazy"` a 2 imágenes que faltaban:
+  - Detalle: cuando hay foto única (línea 1415)
+  - Carrito: miniaturas de productos (línea 1509)
+
+**Commits:** 
+- `aea3fed`: polish: migrate typography + spacing to design tokens, fix keyboard accessibility
+
+**Resultado:**
+| Dimensión | Antes | Después |
+|---|---|---|
+| Accessibility | 3/4 | 4/4 ✅ |
+| Performance | 3/4 | 4/4 ✅ |
+| Responsive | 3/4 | 3/4 |
+| Theming | 2/4 | 4/4 ✅ |
+| Anti-Patterns | 3/4 | 4/4 ✅ |
+| **TOTAL** | **14/20** | **18/20** ✅ |
+
+---
+
+### ✅ SECCIÓN "SOBRE NOSOTROS" — Feature nueva
+
+**Requerimiento:** Agregar sección "Sobre nosotros" al footer con historia de Eve y Nacho (founders)
+
+**Cambios:**
+1. ✅ Copiada imagen `_Imagenes/Eve y nacho.jpg` → `assets/images/eve-y-nacho.jpg`
+2. ✅ Agregado botón `.footer-link` en footer (entre social + copyright):
+   - Estilo: link subrayado, color `--on-dark-muted`, hover → blanco
+   - Abre modal `ov-about`
+3. ✅ Creado sheet modal con estructura:
+   - Imagen: aspecto 1:1, border 2px, lazy loading
+   - Título: "Sobre nosotros"
+   - 4 párrafos: historia completa (pandemia → hoy → gratitud)
+   - Botón cerrar (×)
+4. ✅ Agregado CSS:
+   - `.about-img`: aspecto 1:1, border, radius
+   - `.about-paragraph`: line-height 1.7, spacing semántico
+
+**Contenido (desde PDF):**
+```
+"Todo comenzó en pandemia... Estábamos por casarnos... Así nació este emprendimiento:
+con unas pocas prendas de bebé, muchas ganas de salir adelante y una fe inmensa 
+en que Dios abriría el camino.
+
+Hubo días de recorrer casa por casa... Pero nunca dejamos de creer ni de trabajar.
+
+Hoy, mirando hacia atrás... Lo que empezó como un pequeño sueño de una pareja 
+que quería salir adelante, hoy son dos locales llenos de historias, familias 
+y niños que crecen junto a nosotros.
+
+Gracias por acompañarnos en este camino. Detrás de cada prenda hay esfuerzo, 
+amor y la convicción de que, con fe y perseverancia, los sueños pueden hacerse realidad."
+```
+
+**Verificación Visual:**
+- ✅ Mobile (390px): Footer con botón, modal abre/cierra suave, imagen + párrafos legibles
+- ✅ Desktop (1280px): Modal centrada, layout coherente, hover states funcionales
+
+**Commit:**
+- `b9afb1e`: feat: add "Sobre nosotros" section with Eve y Nacho story to footer
+
+**Status:** Staged locally, **PENDIENTE VISUAL APPROVAL + PUSH** (se espera aprobación antes de producción)
+
+---
+
+### 📋 REGLA NUEVA — Verificación visual antes de pushear
+
+**Feedback del usuario (20/06/2026):**
+- ⚠️ Siempre mostrar preview/screenshot de cambios visuales antes de pushear
+- ⚠️ Nunca pushear a producción sin que el usuario vea cómo queda
+- ⚠️ Documentar el workflow en CLAUDE.md
+
+**Aplicación:**
+1. Hacer cambios locales
+2. Usar `/verify` para screenshots (mobile + desktop)
+3. Mostrar al usuario + esperar aprobación
+4. Recién entonces: commit + push
+
+Esto especialmente para cambios de footer, modales, tipografía, colores, layout responsivo.
+
+---
+
+### 🎯 PENDIENTES MENORES (Polish de "Sobre nosotros")
+
+- 🔍 Verificar aspecto de imagen (¿1:1 es ideal para foto retrato? Considerar 0.8 o ajuste)
+- 🔍 Spacing entre párrafos: `--sp-4` en desktop, considerar `--sp-3` en mobile
+- 🔍 Verificar visibilidad del botón footer (subrayado claro sobre fondo oscuro)
+
+---
+
+### ✅ ESTADO FINAL SESIÓN
+
+- ✅ **Polish completado**: Audit 18/20, sistema de diseño 100% coherente
+- ⏳ **Sobre nosotros**: Feature completa, verificación visual hecha, **PENDIENTE PUSH**
+- ✅ **Workflow ajustado**: Verificación visual antes de producción (documentado)
+- ✅ **Memoria guardada**: Feedback + contexto en `~/.claude/projects/.../memory/`
