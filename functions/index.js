@@ -28,7 +28,7 @@ exports.crearPreferenciaMP = functions.https.onCall(async (data, context) => {
 
     for (const cartItem of cart) {
       const prodSnap = await db.collection('productos').doc(cartItem.productId).get();
-      if (!prodSnap.exists()) {
+      if (!prodSnap.exists) {
         throw new functions.https.HttpsError('not-found', `Producto ${cartItem.productId} no existe`);
       }
 
@@ -194,7 +194,7 @@ exports.webhookMP = functions.https.onRequest(async (req, res) => {
     const pedidoRef = db.collection('pedidos').doc(externalRef);
     const pedidoSnap = await pedidoRef.get();
 
-    if (!pedidoSnap.exists()) {
+    if (!pedidoSnap.exists) {
       console.warn('Pedido not found for payment:', paymentId, externalRef);
       return res.status(200).send('ok');
     }

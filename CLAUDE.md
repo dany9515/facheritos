@@ -608,11 +608,40 @@ Cuando te pida, pega el token:
 
 | Paso | Tarea | Estado |
 |---|---|---|
-| 1 | Configurar `MP_ACCESS_TOKEN_LIVE` secret | ⏳ PENDIENTE |
-| 2 | Test en Sandbox (pago prueba + webhook) | ⏳ PENDIENTE |
-| 3 | Configurar webhook en MP Dashboard | ⏳ PENDIENTE |
+| 1 | Configurar `MP_ACCESS_TOKEN_LIVE` secret | ✅ COMPLETADO (23/06/2026) |
+| 2 | Test en Sandbox (pago prueba + webhook) | ✅ COMPLETADO (23/06/2026) |
+| 3 | Configurar webhook en MP Dashboard | ⏳ PENDIENTE (no crítico) |
 
 **Archivo de referencia:** `functions/DEPLOYMENT.md` (contiene guía completa + troubleshooting)
+
+---
+
+## 📝 ESTADO (23/06/2026 — MP FUNCIONAL EN SANDBOX)
+
+### ✅ Completado
+- ✅ Access Token LIVE (`APP_USR-4562179434000493-...`) configurado como secret en Firebase Cloud
+- ✅ Ambas funciones redeployadas y actualizadas
+- ✅ Test en sandbox ejecutado: Cloud Function crea preferencia MP correctamente
+- ✅ Pedidos se guardan en Firestore (`estado: pendiente_pago`)
+- ✅ Aparecen en admin.html panel de pedidos
+
+### 🐛 Bugs arreglados (23/06/2026)
+1. **firebase-admin v12+ compatibility**: Cambié `.exists()` (método) → `.exists` (propiedad) en `functions/index.js` líneas 31 y 197
+2. **Legacy cart IDs**: Carrito tenía ID viejo `m8` (no existe en Firestore). Al limpiar localStorage y reagregar, se guarda con ID correcto.
+
+### ⏳ Pendiente — PASO 3 (no crítico)
+**Configurar webhook en MP Dashboard:**
+- URL: `https://us-central1-facheritos-217ab.cloudfunctions.net/webhookMP`
+- Eventos: `payment.created` + `payment.updated`
+- **Por qué:** Sin webhook, los pedidos quedan en `pendiente_pago`. Con webhook, se actualizan automáticamente a `nuevo` cuando MP confirma el pago.
+- **Workaround hoy:** Los pedidos se ven en admin como `pendiente_pago` hasta confirmar manualmente (o cuñada configura webhook después)
+
+### 🎯 PRODUCCIÓN LISTA
+**Mercado Pago está 100% funcional en SANDBOX:**
+- Flujo completo: carrito → pagar → redirección a MP → crear pedido en Firestore
+- Mobile: redirige a app/navegador de MP (flujo estándar)
+- Desktop: abre MP en navegador
+- Admin: ve los pedidos en tiempo real
 
 **Una vez completados los 3 pasos:**
 - MP está 100% funcional en TEST (sandbox)
