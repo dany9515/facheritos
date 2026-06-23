@@ -484,6 +484,48 @@ Proyecto simplificado de ~150+ archivos/carpetas a solo 23 items necesarios.
 
 ---
 
+## 📌 ESTADO AL CERRAR SESIÓN (22/06/2026 noche — MP + Limpieza n8n)
+
+### ✅ Hecho esta sesión
+
+1. **Limpieza total de n8n** (commit `7ba94b1`):
+   - Eliminadas 6 secciones completas (175 líneas) de CLAUDE.md
+   - Borrados planes, workflows, decisiones, notas de n8n
+   - Actualizada sección de Limpieza: `functions/` ahora se mantiene (usado para MP)
+   - RAZÓN: n8n fue abandonado; todo por Cloud Functions de MP
+
+2. **Documentación del Plan MP en CLAUDE.md** (commit `0a5ce5b`):
+   - Plan claro de 3 pasos para completar Mercado Pago
+   - Paso 1: Configurar `MP_ACCESS_TOKEN_LIVE` secret
+   - Paso 2: Test en Sandbox (pago + webhook validation)
+   - Paso 3: Configurar webhook en MP Dashboard
+
+3. **Contacto con cuñada sobre token LIVE**:
+   - Preparado mensaje paso a paso
+   - Cuñada intentó desde app de MP → error "Oh no, algo salió mal"
+   - Solución: **Tiene que ser desde navegador web en PC, no desde app**
+   - Status: Cuñada no tiene PC a mano, **pendiente para mañana**
+
+### ⏳ MAÑANA — ORDEN DE PRIORIDAD
+
+1. **Cuñada envía token LIVE** (desde PC, navegador web)
+   - URL: https://www.mercadopago.com.ar/developers/panel/credentials
+   - Buscar Access Token en "Credenciales de producción"
+   - Debe empezar con `APP_USR-` (no TEST-)
+
+2. **Una vez que tengas token:**
+   - Paso 1: `firebase functions:secrets:set MP_ACCESS_TOKEN_LIVE --project facheritos-217ab`
+   - Paso 2: Test en Sandbox (pago de prueba)
+   - Paso 3: Configurar webhook en MP Dashboard
+
+### 📝 Notas importantes
+
+- **No hay cambios en producción**: Todo está en CLAUDE.md
+- **n8n completamente eliminado**: Enfoque único = Cloud Functions + Firebase Auth
+- **Cuñada sabe qué hacer**: Mensaje claro para traer token desde PC mañana
+
+---
+
 ## 📋 PLAN: COMPLETAR MERCADO PAGO (22/06/2026 — EN PROGRESO)
 
 **Estado actual:** Cloud Functions implementadas y deployadas (commit `a02e6ed`), pero falta configuración final para que funcionen en producción.
