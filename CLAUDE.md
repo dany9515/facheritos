@@ -643,6 +643,44 @@ Cuando te pida, pega el token:
 - Desktop: abre MP en navegador
 - Admin: ve los pedidos en tiempo real
 
+---
+
+## 📌 CIERRE DE SESIÓN (23/06/2026)
+
+### ✅ Hecho hoy
+1. **Configuración de credenciales MP LIVE**
+   - Access Token: `APP_USR-4562179434000493-052414-101a79f081a710b473c4323fddd91e80-51517100`
+   - Public Key: `APP_USR-4a9ba689-7dd1-4c99-82f9-db15be747593`
+   - Secret guardado en Firebase Cloud
+
+2. **Deploy y test de Cloud Functions**
+   - Arreglado: `.exists()` → `.exists` (firebase-admin v12 compatibility)
+   - Ambas funciones redeployadas exitosamente
+   - Test en sandbox: ✅ funciona, crea pedidos en Firestore
+
+3. **Verificación de flujo**
+   - Carrito → Pagar con MP → Redirección a MP → Preferencia creada
+   - Pedidos guardados con `mp_preference_id` y `estado: pendiente_pago`
+   - Admin panel muestra pedidos en tiempo real
+
+### ⏳ Mañana — PASO FINAL
+**Configurar webhook (15 min):**
+- Cuñada: ir a MP Dashboard → Webhooks
+- Agregar URL: `https://us-central1-facheritos-217ab.cloudfunctions.net/webhookMP`
+- Eventos: `payment.created` + `payment.updated`
+- Resultado: Pedidos se confirman automáticamente (estado: `nuevo`)
+
+**Luego:** Pushear a GitHub si todo está OK
+```bash
+git push origin master && git push origin master:main
+```
+
+### 💭 Notas
+- MP **está en TEST/SANDBOX** hoy (no mueve plata real)
+- Para pasar a LIVE: solo cambiar el token en Firebase secrets (sin tocar código)
+- Webhook no es crítico para funcionar, pero sí para automatizar confirmaciones
+- Todo limpio y listo para mañana 🚀
+
 **Una vez completados los 3 pasos:**
 - MP está 100% funcional en TEST (sandbox)
 - Cuando Mercado Pago proporcione token LIVE, solo cambiar el secret (Paso 1 con token LIVE) y redeploy
