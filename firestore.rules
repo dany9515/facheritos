@@ -19,11 +19,10 @@ service cloud.firestore {
 
     // Pedidos
     match /pedidos/{id} {
-      // Crear: permitido para todos (cliente/invitado), con validacion estricta.
+      // Crear: permitido para todos (cliente/invitado), solo para transferencia (WhatsApp).
+      // Pedidos MP se crean vía Cloud Function (crearPreferenciaMP) después de validar precios.
       // Lista blanca de campos + tipos + tamanos para frenar spam, payloads gigantes
-      // e inyeccion de campos arbitrarios. NOTA: los campos mp_* NO se validan como
-      // prueba de pago aca; la confirmacion real de Mercado Pago debe hacerla una
-      // Cloud Function del lado servidor (pendiente). Hoy MP esta en TEST.
+      // e inyeccion de campos arbitrarios.
       allow create: if request.resource.data.estado == 'nuevo'
                     // total: numero positivo con tope sano (anti overflow / basura)
                     && request.resource.data.total is number
@@ -35,7 +34,7 @@ service cloud.firestore {
                     // datos del cliente: tipos + tamanos
                     && request.resource.data.cliente_nombre is string
                     && request.resource.data.cliente_nombre.size() <= 200
-                    && request.resource.data.metodo_pago in ['transferencia', 'mp']
+                    && request.resource.data.metodo_pago == 'transferencia'
                     && (!('nota' in request.resource.data.keys())
                         || (request.resource.data.nota is string
                             && request.resource.data.nota.size() <= 2000))

@@ -8,7 +8,7 @@
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
   font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com;
   img-src 'self' data: blob: https://firebasestorage.googleapis.com;
-  connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firebasestorage.googleapis.com https://api.mercadopago.com https://api.emailjs.com https://esm.sh;
+  connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firebasestorage.googleapis.com https://*.cloudfunctions.net https://api.emailjs.com https://esm.sh;
   frame-src https://facheritos-217ab.firebaseapp.com;
   object-src 'none';
   base-uri 'self';
@@ -1035,13 +1035,15 @@ window.__fbCfg = {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, query, where, orderBy, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
 const app = initializeApp(window.__fbCfg);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
+const functions = getFunctions(app);
 const ADMIN_EMAIL = 'facheritos@operlog.com.ar';
 
 function esc(s) {
@@ -1056,8 +1058,6 @@ let selectedDelivery = 'retiro';
 let selectedPayment = 'transferencia';
 let comprobanteFile = null;
 let currentPerfil = null;
-// ⚠️ Producción: mover el Access Token a un Cloud Function para no exponerlo en el cliente
-const MP_AT = 'TEST-4562179434000493-052414-de318dac1e62575d0d4a421a3925b868-51517100';
 let allProductos = [];
 let cart = JSON.parse(localStorage.getItem('fach_cart') || '[]');
 let currentSeccion = localStorage.getItem('fach_seccion') || null;
@@ -1664,7 +1664,7 @@ async function loadTiendaConfig() {
   } catch(e) {}
 }
 
-// ─── MERCADO PAGO CHECKOUT PRO ───
+// ─── MERCADO PAGO CHECKOUT PRO (via Cloud Function) ───
 window.sendMP = async function() {
   if (!cart.length) return;
   const btn = document.getElementById('btn-send-mp');
@@ -1732,55 +1732,35 @@ window.sendMP = async function() {
 
   btn.textContent = 'Preparando pago…';
 
-  // Armar datos del pedido
-  let total = 0;
-  const lines = cart.map(item => {
-    const p = allProductos.find(x => x.id === item.id); if (!p) return '';
-    const base = (p.precio_oferta && p.precio_oferta < p.precio) ? p.precio_oferta : p.precio;
-    const s = base * item.qty; total += s;
-    return `• ${p.nombre} x${item.qty} = $${s.toLocaleString('es-AR')}`;
-  }).filter(Boolean);
-  const note   = document.getElementById('by-note').value.trim();
-  const baseUrl = window.location.origin + window.location.pathname.replace(/\/$/, '');
-
   try {
-    // Crear preferencia — ⚠️ Producción: mover a Cloud Function
-    const res = await fetch('https://api.mercadopago.com/checkout/preferences', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${MP_AT}` },
-      body: JSON.stringify({
-        items: [{ title: 'Compra en Facheritos', quantity: 1, currency_id: 'ARS', unit_price: total }],
-        payer: { email: payerEmail },
-        back_urls: { success: baseUrl, failure: baseUrl, pending: baseUrl },
-        statement_descriptor: 'FACHERITOS',
-      }),
-    });
-    const pref = await res.json();
-    if (!pref.id) throw new Error('Sin preferencia');
+    // Llamar Cloud Function callable para crear preferencia MP
+    // La función calcula el total y valida precios en el servidor
+    const crearPreferenciaMP = httpsCallable(functions, 'crearPreferenciaMP');
+    const nota = document.getElementById('by-note').value.trim();
 
-    // Guardar pedido pendiente en localStorage para procesarlo al volver
-    localStorage.setItem('fach_mp_pending', JSON.stringify({
-      usuario_id:        currentUser?.uid || null,
-      es_invitado:       !currentUser,
-      cliente_nombre:    nombre,
-      cliente_email:     payerEmail,
-      cliente_telefono:  tel,
+    const result = await crearPreferenciaMP({
+      cart: cart.map(item => ({ productId: item.id, qty: item.qty })),
+      cliente_nombre: nombre,
+      cliente_email: payerEmail,
+      cliente_telefono: tel,
       cliente_direccion: dir,
-      items:             lines,
-      total,
-      metodo_pago:       'mp',
-      mp_preference_id:  pref.id,
-      estado:            'nuevo',
-      nota:              note,
-      entrega:           selectedDelivery,
-      seccion:           currentSeccion,
-    }));
+      nota,
+      entrega: selectedDelivery,
+      seccion: currentSeccion
+    });
 
-    // Redirigir: sandbox_init_point en TEST, init_point en producción
-    location.href = pref.sandbox_init_point || pref.init_point;
+    const { preferenceId, initPoint, pedidoId } = result.data;
+
+    // Guardar solo el pedidoId en localStorage (ya no el pedido completo)
+    localStorage.setItem('fach_mp_pedidoId', pedidoId);
+
+    // Limpiar carrito y redirigir a MP
+    cart = []; saveCart(); updateCartBadge();
+    location.href = initPoint;
+
   } catch(e) {
-    console.error('MP preference:', e);
-    showToast('❌', 'No se pudo iniciar el pago. Intentá de nuevo.');
+    console.error('MP checkout error:', e);
+    showToast('❌', e.message || 'No se pudo iniciar el pago. Intentá de nuevo.');
     btn.disabled = false; btn.textContent = 'Pagar con Mercado Pago';
   }
 };
@@ -1989,89 +1969,104 @@ async function init() {
   // SIEMPRE mostrar el splash para elegir sección, sin importar si ya eligió antes
   await Promise.all([loadAndRender(), loadTiendaConfig()]);
 
-  // Procesar URL params
+  // Procesar URL params y retorno desde MP
   const params = new URLSearchParams(location.search);
-  const colStatus = params.get('collection_status') || params.get('status');
   const productoParam = params.get('producto');
+  const mpReturn = params.get('mp_return');
+  const pedidoId = localStorage.getItem('fach_mp_pedidoId');
 
-  // Abrir producto directo desde URL compartida
-  if (!colStatus && productoParam) {
+  // Abrir producto directo desde URL compartida (sin pago MP en proceso)
+  if (!mpReturn && !pedidoId && productoParam) {
     document.getElementById('splash').style.display = 'none';
     openDet(productoParam);
   }
 
-  // Procesar retorno desde Mercado Pago
-  if (colStatus) {
+  // Procesar retorno desde Mercado Pago (esperando confirmación del webhook)
+  if (mpReturn && pedidoId) {
     history.replaceState({}, '', location.pathname);
-    const pendingRaw = localStorage.getItem('fach_mp_pending');
-    localStorage.removeItem('fach_mp_pending');
+    localStorage.removeItem('fach_mp_pedidoId');
 
-    if (colStatus === 'approved' && pendingRaw) {
-      const order = JSON.parse(pendingRaw);
-      const paymentId = params.get('payment_id') || params.get('collection_id');
-      let pedidoId = null;
-      try {
-        const ref2 = await addDoc(collection(db, 'pedidos'), {
-          ...order,
-          mp_payment_id:        paymentId || null,
-          mp_collection_status: colStatus,
-          creado:               serverTimestamp(),
-        });
-        pedidoId = ref2.id;
-      } catch(_) {}
-      cart = []; saveCart(); updateCartBadge();
+    // Mostrar modal de espera: "Verificando tu pago…"
+    showToast('⏳', 'Verificando tu pago…');
 
-      // Construir mensaje de WhatsApp para la tienda
-      const entregaTexto = order.entrega === 'envio' ? '🚚 Envío a domicilio' : '🏪 Retiro en local';
-      const waMsg = [
-        `¡Hola Facheritos! 👶 Nuevo pedido — PAGO CONFIRMADO`, ``,
-        `✅ *PAGO APROBADO por Mercado Pago*`,
-        paymentId ? `*ID de pago:* ${paymentId}` : '',
-        ``,
-        `*Nombre:* ${order.cliente_nombre}`,
-        order.cliente_telefono ? `*Teléfono:* ${order.cliente_telefono}` : '',
-        (order.cliente_direccion || '').trim() ? `*Dirección:* ${order.cliente_direccion}` : '',
-        order.cliente_email ? `*Email:* ${order.cliente_email}` : '',
-        ``, `*Entrega:* ${entregaTexto}`,
-        `*Pago:* 💳 Mercado Pago`,
-        ``, `*Productos:*`, ...order.items, ``,
-        `*Total: $${Number(order.total).toLocaleString('es-AR')}*`,
-        order.nota ? `\n*Nota:* ${order.nota}` : '',
-      ].filter(x => x !== null && x !== undefined && x !== '').join('\n');
+    // Escuchar el documento del pedido en Firestore (el webhook lo actualiza)
+    const pedidoRef = doc(db, 'pedidos', pedidoId);
+    let unsubscribe = null;
+    let timeoutId = null;
 
-      const waNum = tiendaConfig.whatsapp || '5492974359455';
-      const waUrl = `https://wa.me/${waNum}?text=${encodeURIComponent(waMsg)}`;
+    const cleanup = () => {
+      if (unsubscribe) unsubscribe();
+      if (timeoutId) clearTimeout(timeoutId);
+    };
 
-      // Mostrar modal con botón WA (garantizado) e intentar apertura automática
-      const modal = document.getElementById('mp-success-modal');
-      const waConfirmBtn = document.getElementById('mp-wa-confirm-btn');
-      if (waConfirmBtn) waConfirmBtn.onclick = () => { window.open(waUrl, '_blank'); modal.style.display = 'none'; };
-      if (modal) modal.style.display = 'flex';
-      try { window.open(waUrl, '_blank'); } catch(_) {}
+    unsubscribe = onSnapshot(pedidoRef, async (snap) => {
+      if (!snap.exists()) return;
 
-      // Email de confirmación al cliente
-      try {
-        const cfg = tiendaConfig;
-        const ejs = cfg.emailjs || {};
-        if (ejs.public_key && ejs.service_id && ejs.template_id && order.cliente_email) {
-          emailjs.init({ publicKey: ejs.public_key });
-          await emailjs.send(ejs.service_id, ejs.template_id, {
-            to_email:      order.cliente_email,
-            to_name:       order.cliente_nombre?.split(' ')[0] || 'Cliente',
-            items_lista:   order.items.join('\n'),
-            total_texto:   `$${Number(order.total).toLocaleString('es-AR')}`,
-            entrega_texto: entregaTexto,
-            nota_texto:    order.nota || 'Sin notas adicionales',
-            tienda_nombre: cfg.nombre || 'Facheritos',
-            pedido_id:     pedidoId || '—',
-          });
-        }
-      } catch(_) {}
-    } else if (colStatus === 'rejected') {
-      showToast('❌', 'El pago fue rechazado. Podés intentar de nuevo.');
-    } else if (colStatus === 'pending' || colStatus === 'in_process') {
-      showToast('⏳', 'Pago pendiente. Te avisamos cuando se confirme.');
-    }
+      const pedido = snap.data();
+      const estado = pedido.estado;
+
+      if (estado === 'nuevo') {
+        // Pago confirmado — construir WA + email
+        cleanup();
+
+        const entregaTexto = pedido.entrega === 'envio' ? '🚚 Envío a domicilio' : '🏪 Retiro en local';
+        const waMsg = [
+          `¡Hola Facheritos! 👶 Nuevo pedido — PAGO CONFIRMADO`, ``,
+          `✅ *PAGO APROBADO por Mercado Pago*`,
+          pedido.mp_payment_id ? `*ID de pago:* ${pedido.mp_payment_id}` : '',
+          ``,
+          `*Nombre:* ${pedido.cliente_nombre}`,
+          pedido.cliente_telefono ? `*Teléfono:* ${pedido.cliente_telefono}` : '',
+          (pedido.cliente_direccion || '').trim() ? `*Dirección:* ${pedido.cliente_direccion}` : '',
+          pedido.cliente_email ? `*Email:* ${pedido.cliente_email}` : '',
+          ``, `*Entrega:* ${entregaTexto}`,
+          `*Pago:* 💳 Mercado Pago`,
+          ``, `*Productos:*`, ...pedido.items, ``,
+          `*Total: $${Number(pedido.total).toLocaleString('es-AR')}*`,
+          pedido.nota ? `\n*Nota:* ${pedido.nota}` : '',
+        ].filter(x => x !== null && x !== undefined && x !== '').join('\n');
+
+        const waNum = tiendaConfig.whatsapp || '5492974359455';
+        const waUrl = `https://wa.me/${waNum}?text=${encodeURIComponent(waMsg)}`;
+
+        // Mostrar modal con botón WA
+        const modal = document.getElementById('mp-success-modal');
+        const waConfirmBtn = document.getElementById('mp-wa-confirm-btn');
+        if (waConfirmBtn) waConfirmBtn.onclick = () => { window.open(waUrl, '_blank'); modal.style.display = 'none'; };
+        if (modal) modal.style.display = 'flex';
+        try { window.open(waUrl, '_blank'); } catch(_) {}
+
+        // Email de confirmación al cliente
+        try {
+          const cfg = tiendaConfig;
+          const ejs = cfg.emailjs || {};
+          if (ejs.public_key && ejs.service_id && ejs.template_id && pedido.cliente_email) {
+            emailjs.init({ publicKey: ejs.public_key });
+            await emailjs.send(ejs.service_id, ejs.template_id, {
+              to_email:      pedido.cliente_email,
+              to_name:       pedido.cliente_nombre?.split(' ')[0] || 'Cliente',
+              items_lista:   pedido.items.join('\n'),
+              total_texto:   `$${Number(pedido.total).toLocaleString('es-AR')}`,
+              entrega_texto: entregaTexto,
+              nota_texto:    pedido.nota || 'Sin notas adicionales',
+              tienda_nombre: cfg.nombre || 'Facheritos',
+              pedido_id:     pedidoId,
+            });
+          }
+        } catch(_) {}
+
+      } else if (estado === 'fallido') {
+        // Pago rechazado
+        cleanup();
+        showToast('❌', 'El pago fue rechazado. Podés intentar de nuevo.');
+      }
+    });
+
+    // Fallback de 20s: si no llega confirmación, mostrar mensaje
+    timeoutId = setTimeout(() => {
+      cleanup();
+      showToast('⏳', 'Tu pago se está procesando. Te confirmamos por WhatsApp/email en breve.');
+    }, 20000);
   }
 }
 init();
