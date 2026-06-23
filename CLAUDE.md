@@ -655,3 +655,98 @@ Proyecto simplificado de ~150+ archivos/carpetas a solo 23 items necesarios.
 - ✅ Producción: intacta
 - ✅ Desarrollo: limpio
 - ✅ Documentación: completa
+
+---
+
+## 📋 PLAN: COMPLETAR MERCADO PAGO (22/06/2026 — EN PROGRESO)
+
+**Estado actual:** Cloud Functions implementadas y deployadas (commit `a02e6ed`), pero falta configuración final para que funcionen en producción.
+
+**Los 3 pasos pendientes:**
+
+### PASO 1: Configurar MP_ACCESS_TOKEN_LIVE como Secret de Firebase
+
+**Qué hacer:**
+```bash
+firebase functions:secrets:set MP_ACCESS_TOKEN_LIVE --project facheritos-217ab
+```
+
+Cuando te pida, pega el token:
+- **TEST (sandbox):** `TEST-4562179434000493-052414-de318dac1e62575d0d4a421a3925b868-51517100`
+- **LIVE (producción):** Token LIVE que proporcione Mercado Pago (cuando esté listo)
+
+**Por qué:** Hoy el token está hardcodeado en `functions/index.js` líneas 94 y 171 como fallback. Los secrets de Firebase son la forma segura de manejar credenciales.
+
+**Resultado:** El secret `MP_ACCESS_TOKEN_LIVE` se crea en Firebase Cloud y se inyecta automáticamente en las funciones (`process.env.MP_ACCESS_TOKEN_LIVE`).
+
+---
+
+### PASO 2: Test en Sandbox (verificar todo funciona)
+
+**Qué hacer:**
+1. Luego de ejecutar Paso 1, redeploy de funciones (automático o manual):
+   ```bash
+   firebase deploy --only functions --project facheritos-217ab
+   ```
+
+2. Entra a la tienda local: `http://127.0.0.1:5500/index.html`
+
+3. Selecciona sección (bebés o teens) → agrega un producto al carrito
+
+4. Click "Pagar con Mercado Pago"
+
+5. Aparece el formulario de pago de MP (sandbox)
+
+6. Usa credenciales de prueba:
+   - Email: `test_user_123456789@testuser.com`
+   - Tarjeta: `4111 1111 1111 1111`
+   - Vencimiento: `12/25`
+   - CVV: `123`
+   - (Ver https://www.mercadopago.com.ar/developers/es/docs/checkout-pro/test-transactions)
+
+7. Completa el pago → debería volver a la tienda con "Verificando tu pago…"
+
+8. **Verifica en Firestore:**
+   - Colección `pedidos` → último pedido
+   - Estado debe cambiar de `pendiente_pago` a `nuevo` (cuando el webhook llega)
+   - Campos `mp_preference_id`, `mp_payment_id`, `mp_collection_status` deben estar llenos
+
+**Resultado:** Si el estado cambia a `nuevo` automáticamente, el webhook funcionó ✅
+
+---
+
+### PASO 3: Configurar Webhook en Mercado Pago Dashboard
+
+**Qué hacer:**
+1. Ve a https://www.mercadopago.com/developers/panel/apps
+
+2. Busca tu app de Mercado Pago (probablemente "Facheritos")
+
+3. En **Configuración** → **Notificaciones** → **IPN**, agrega:
+   - **URL de notificación:** `https://us-central1-facheritos-217ab.cloudfunctions.net/webhookMP`
+   - **Eventos:** Marca `payment.created` y `payment.updated`
+
+4. Click "Guardar"
+
+5. Haz un pago de prueba nuevamente (Paso 2, punto 3-7)
+
+6. En el dashboard de MP, verifica que tu app recibió la notificación (historial de IPN)
+
+**Resultado:** El webhook recibe la notificación, valida el pago contra MP API, y actualiza el pedido en Firestore ✅
+
+---
+
+## ✅ RESUMEN
+
+| Paso | Tarea | Estado |
+|---|---|---|
+| 1 | Configurar `MP_ACCESS_TOKEN_LIVE` secret | ⏳ PENDIENTE |
+| 2 | Test en Sandbox (pago prueba + webhook) | ⏳ PENDIENTE |
+| 3 | Configurar webhook en MP Dashboard | ⏳ PENDIENTE |
+
+**Archivo de referencia:** `functions/DEPLOYMENT.md` (contiene guía completa + troubleshooting)
+
+**Una vez completados los 3 pasos:**
+- MP está 100% funcional en TEST (sandbox)
+- Cuando Mercado Pago proporcione token LIVE, solo cambiar el secret (Paso 1 con token LIVE) y redeploy
+- NO hace falta tocar código ni `index.html`
