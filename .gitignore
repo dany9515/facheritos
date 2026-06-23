@@ -1,4 +1,5 @@
 firebase-config.js
+firebase-key.json
 node_modules/
 *.png
 
