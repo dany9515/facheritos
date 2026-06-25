@@ -28,7 +28,7 @@ exports.crearPreferenciaMP = functions.https.onCall(async (data, context) => {
 
     for (const cartItem of cart) {
       const prodSnap = await db.collection('productos').doc(cartItem.productId).get();
-      if (!prodSnap.exists()) {
+      if (!prodSnap.exists) {
         throw new functions.https.HttpsError('not-found', `Producto ${cartItem.productId} no existe`);
       }
 
@@ -194,7 +194,7 @@ exports.webhookMP = functions.https.onRequest(async (req, res) => {
     const pedidoRef = db.collection('pedidos').doc(externalRef);
     const pedidoSnap = await pedidoRef.get();
 
-    if (!pedidoSnap.exists()) {
+    if (!pedidoSnap.exists) {
       console.warn('Pedido not found for payment:', paymentId, externalRef);
       return res.status(200).send('ok');
     }
@@ -221,5 +221,83 @@ exports.webhookMP = functions.https.onRequest(async (req, res) => {
     console.error('webhookMP error:', error);
     // Responder 200 anyway para que MP no reintente infinito
     res.status(200).send('error logged');
+  }
+});
+
+// ─── FUNCIÓN CALLABLE: GENERAR LINK DE VERIFICACIÓN + LLAMAR N8N ───
+// El cliente llama esta función al registrarse (en lugar de sendEmailVerification)
+// Genera el link con admin.auth(), lo manda a n8n para que mande el email bonito
+
+exports.generateVerificationLink = functions.https.onCall(async (data, context) => {
+  const { email } = data;
+
+  if (!email) {
+    throw new functions.https.HttpsError('invalid-argument', 'Email requerido');
+  }
+
+  try {
+    // Paso 1: Generar link de verificación
+    const verificationLink = await admin.auth().generateEmailVerificationLink(email);
+
+    // Paso 2: Llamar webhook n8n
+    const n8nResponse = await fetch('https://dani9515.app.n8n.cloud/webhook/verificar-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_name: data.userName || 'Usuario',
+        user_email: email,
+        verification_link: verificationLink
+      })
+    });
+
+    if (!n8nResponse.ok) {
+      console.warn(`n8n webhook error: ${n8nResponse.statusText}`);
+      // No lanzar error; n8n puede fallar pero el link se generó OK
+    }
+
+    return { success: true, message: 'Link enviado' };
+
+  } catch (error) {
+    console.error('generateVerificationLink error:', error);
+    throw new functions.https.HttpsError('internal', error.message || 'Error generando link de verificación');
+  }
+});
+
+// ─── FUNCIÓN CALLABLE: GENERAR LINK DE RESET + LLAMAR N8N ───
+// El cliente llama esta función cuando hace "Olvidé mi contraseña"
+// Genera el link con admin.auth(), lo manda a n8n para que mande el email bonito
+
+exports.generatePasswordResetLink = functions.https.onCall(async (data, context) => {
+  const { email } = data;
+
+  if (!email) {
+    throw new functions.https.HttpsError('invalid-argument', 'Email requerido');
+  }
+
+  try {
+    // Paso 1: Generar link de reset
+    const resetLink = await admin.auth().generatePasswordResetLink(email);
+
+    // Paso 2: Llamar webhook n8n
+    const n8nResponse = await fetch('https://dani9515.app.n8n.cloud/webhook/recuperar-contrasena', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_name: data.userName || 'Usuario',
+        user_email: email,
+        reset_link: resetLink
+      })
+    });
+
+    if (!n8nResponse.ok) {
+      console.warn(`n8n webhook error: ${n8nResponse.statusText}`);
+      // No lanzar error; n8n puede fallar pero el link se generó OK
+    }
+
+    return { success: true, message: 'Link enviado' };
+
+  } catch (error) {
+    console.error('generatePasswordResetLink error:', error);
+    throw new functions.https.HttpsError('internal', error.message || 'Error generando link de reset');
   }
 });

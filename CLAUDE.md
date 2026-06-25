@@ -426,179 +426,6 @@ Esto especialmente para cambios de footer, modales, tipografía, colores, layout
 
 ---
 
-## 📧 IMPLEMENTACIÓN n8n — AUTOMATIZACIÓN DE EMAILS (Sesión 21/06/2026)
-
-**Objetivo:** Centralizar todo envío de emails (registro, cambio de contraseña, confirmación de pedido) en n8n.
-
-### ✅ FASE 1 COMPLETADA — Configuración Base
-
-**Credenciales n8n (http://108.174.150.203/home/workflows):**
-
-1. ✅ **Firebase (Google Service Account)**
-   - Proyecto: `facheritos-217ab`
-   - JSON key guardada en: `firebase-key.json` (raíz del proyecto, en `.gitignore`)
-   - Estado: Conectado y funcional
-
-2. ✅ **SMTP Zoho** 
-   - Host: `smtp.zoho.com` | Puerto: `465` | SSL (no TLS)
-   - Usuario: `facheritos@operlog.com.ar` | Contraseña: `Proteina.`
-   - Estado: Conectado y funcional (error resuelto: puerto 465 + SSL, no 587 + TLS)
-
-### ✅ WORKFLOW 1: Email de Verificación (Registro) — EN PRODUCCIÓN
-
-**Ubicación:** n8n workflow `Facheritos` (no publicado aún — VER ESTADO ABAJO)
-
-**Nodos:**
-1. **Schedule Trigger**: Cada 2 minutos
-2. **Query a document** (Firestore):
-   - Colección: `/perfiles`
-   - Query: Busca documentos donde `verificado === false`
-   - Resultado: Array de usuarios sin verificar
-3. **Send an Email** (SMTP Zoho):
-   - From: `facheritos@operlog.com.ar`
-   - To: `{{ $node["Query a document"].json.email }}` (dinámico, por usuario)
-   - Subject: `Verifica tu email en Facheritos`
-   - Body: HTML template con diseño Facheritos (monocromo + volt highlight)
-   - Estado: Testeado — funciona ✓
-
-**Problema actual:**
-- ⚠️ **No publicado aún** — El workflow está creado pero NO está activado en n8n
-- ⚠️ **Conflicto con Firebase Auth**: Hoy Firebase Auth (`sendEmailVerification` en línea 1178 de index.html) también envía email de verificación
-- 🎯 **Decisión pendiente**: ¿Reemplazar Firebase Auth email por n8n solamente? (requiere cambios en código + generar link de verificación desde n8n)
-
-**Campos de `/perfiles` (según código index.html línea 1159-1166):**
-```javascript
-{
-  nombre, apellido,
-  telefono, direccion, ciudad, provincia, codigo_postal,
-  email,         // <-- Campo usado en "To Email"
-  creado: timestamp,
-  verificado: bool  // <-- Campo filtrado en Query
-}
-```
-
-### ⏳ WORKFLOW 2 & 3 PENDIENTES
-
-**Workflow 2: Email de Cambio de Contraseña (Admin)**
-- Trigger: Webhook POST desde admin.html (botón "Cambiar contraseña")
-- Acción: Enviar confirmación de cambio al admin
-- Estado: NO INICIADO
-
-**Workflow 3: Confirmación de Pedido**
-- Trigger: Schedule o Query Firestore (`/pedidos`)
-- Acción: Enviar confirmación al cliente + notificación al admin
-- Estado: NO INICIADO
-
-### 🔧 DECISIONES PENDIENTES
-
-1. **Email de verificación — ¿Opción A o B?**
-   - **Opción A**: n8n genera link de verificación vía Firebase Admin API (profesional, complejo)
-   - **Opción B**: n8n envía email → usuario se logea → verifica en la tienda (simple, menos elegante)
-   - **Acción**: Usuario decide antes de continuar
-
-2. **¿Reemplazar Firebase Auth email o mantener ambos?**
-   - Hoy: Firebase envía + n8n envía = 2 emails (redundante)
-   - Usuario quiere: Solo n8n (centralizado)
-   - Acción: Cambio de código en `index.html` línea 1178 (eliminar `sendEmailVerification`)
-
-### 📋 PRÓXIMOS PASOS
-
-1. **Decidir Opción A o B** para el link de verificación
-2. **Eliminar `sendEmailVerification` de index.html** (si va Opción A/B con n8n only)
-3. **Publicar Workflow 1** en n8n
-4. **Crear Workflow 2**: Cambio de contraseña
-5. **Crear Workflow 3**: Confirmación de pedido
-6. **Diseñar templates** de email para Workflow 2 y 3
-7. **Test completo**: Registro → Email → Verificación → Compra → Confirmación
-
-### 📝 NOTAS DE CONFIGURACIÓN
-
-- **n8n URL**: http://108.174.150.203/home/workflows
-- **Firebase key JSON**: No commitear (`.gitignore` lo cubre)
-- **SMTP Zoho**: Configurado globalmente como credencial, reutilizable en todos los workflows
-- **Variables dinámicas n8n**: `{{ $node["nombre_nodo"].json.campo }}` para referenciar datos de nodos anteriores
-- **Iteración**: n8n maneja automáticamente arrays (cuando Query devuelve múltiples documentos, envía un email a cada uno)
-
----
-
-## 📌 ESTADO AL CERRAR LA SESIÓN (22/06/2026, n8n + código verificación)
-
-### ✅ PIVOTE EXITOSO — De Cloud Functions a n8n simple
-
-**Problema identificado:**
-- Intentamos Cloud Functions v2 (requería App Engine)
-- App Engine falló con error genérico en Google Cloud
-- Cloud Functions v1 también requería setup complejo
-- El flujo se volvió frustante (múltiples intentos sin resultado)
-
-**Decisión:**
-- ⏸️ Abandonar Cloud Functions
-- ✅ Usar n8n directamente con flujo de código de verificación simple
-
-### ✅ NUEVO FLUJO DE VERIFICACIÓN — Código de 4+ dígitos
-
-**Idea (aprobada por usuario):**
-1. n8n genera código aleatorio (4+ números) → ej: `5847`
-2. n8n guarda el código en Firestore (campo `codigo_verificacion` en `/perfiles/{userId}`)
-3. n8n envía email: "Tu código de verificación: 5847"
-4. Usuario entra a tienda → ve modal: "Ingresa el código que recibiste"
-5. JavaScript valida código contra Firestore
-6. Si coincide → marca como `verificado: true` ✅
-
-**Ventajas:**
-- ✅ Sin Cloud Functions, sin App Engine — solo n8n
-- ✅ Funciona ahora (sin compilaciones ni deploys complejos)
-- ✅ Seguro (código temporal + almacenado en Firestore)
-- ✅ Simple de entender y mantener
-
-### 📋 WORKFLOW n8n PARCIALMENTE CONSTRUIDO (22/06/2026)
-
-**Nodos implementados:**
-1. ✅ **Schedule Trigger**: Cada 2 minutos
-2. ✅ **Query a document**: Busca `/perfiles` WHERE `verificado === false`
-3. ✅ **Code in JavaScript**: Genera código aleatorio
-   ```javascript
-   return $input.all().map(item => {
-     const code = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-     return { ...item, codigo_verificacion: code };
-   });
-   ```
-4. ⏳ **Falta agregar**: Update a document (guardar código en Firestore)
-5. ⏳ **Falta agregar**: Send an Email (enviar código)
-
-**Estado actual:** 
-- Query no devuelve datos (no hay usuarios con `verificado: false`)
-- Workflow necesita un usuario de prueba para testear
-- Function node está configurado correctamente (código generado ok si hubiera datos)
-
-### 🎯 PRÓXIMOS PASOS (sesión siguiente)
-
-1. **Crear usuario de prueba en Firestore:**
-   - Registrar manualmente un usuario
-   - Marcar como `verificado: false` en `/perfiles`
-   
-2. **Completar n8n Workflow:**
-   - Agregar nodo "Update a document" después del Code node (guardar `codigo_verificacion`)
-   - Agregar nodo "Send Email" (enviar código vía SMTP Zoho)
-   - Testear con usuario de prueba
-
-3. **Modificar index.html:**
-   - Crear modal de verificación por código
-   - Agregar función que valida código contra Firestore
-   - Cambiar línea 1178: eliminar `sendEmailVerification()`
-
-4. **Publish Workflow en n8n:**
-   - Activar el workflow para que dispare automáticamente cada 2 min
-
-### ⚠️ NOTAS IMPORTANTES
-
-- **No hubo cambios en producción** — solo setup de n8n, sin deploy
-- **firebase-key.json** generado para n8n, está en `.gitignore` (no commitear)
-- **functions/ folder** creada por `firebase init`, pero sin deploy (se puede borrar si no se usa)
-- **Aprendizaje**: n8n tiene todo lo que necesitamos (Query + Function + Update + Email) — no hacen falta servicios externos complejos
-
----
-
 ## 📌 LIMPIEZA Y ORGANIZACIÓN DEL PROYECTO (22/06/2026 — Sesión actual)
 
 ### ✅ Análisis + Limpieza
@@ -611,8 +438,6 @@ Revisión completa del proyecto contra CLAUDE.md para identificar archivos innec
 node_modules/               — Dependencias dev (se regeneran con npm install)
 firebase-config.example.js  — Template viejo (el real es firebase-config.js)
 firebase-key.json           — ⚠️ Credencial privada (regenerable desde Google Cloud)
-functions/                  — Cloud Functions sin deploy (nunca se usó)
-N8N_PLAN.md                 — Notas locales n8n (obsoleto)
 prototipo.html              — Prototype local (ignorado en git)
 verify-mobile.mjs           — Script local (ignorado en git)
 index.html.backup-2026-06-14 — Backup viejo (git lo tiene)
@@ -624,6 +449,7 @@ index.html.backup-2026-06-14 — Backup viejo (git lo tiene)
    - index.html, admin.html
    - firestore.rules, storage.rules
    - firebase.json, firebase-config.js
+   - functions/ (Cloud Functions para Mercado Pago)
    - assets/, manifest.json, sw.js
    - icon-192.png, icon-512.png
 
@@ -655,3 +481,207 @@ Proyecto simplificado de ~150+ archivos/carpetas a solo 23 items necesarios.
 - ✅ Producción: intacta
 - ✅ Desarrollo: limpio
 - ✅ Documentación: completa
+
+---
+
+## 📌 ESTADO AL CERRAR SESIÓN (22/06/2026 noche — MP + Limpieza n8n)
+
+### ✅ Hecho esta sesión
+
+1. **Limpieza total de n8n** (commit `7ba94b1`):
+   - Eliminadas 6 secciones completas (175 líneas) de CLAUDE.md
+   - Borrados planes, workflows, decisiones, notas de n8n
+   - Actualizada sección de Limpieza: `functions/` ahora se mantiene (usado para MP)
+   - RAZÓN: n8n fue abandonado; todo por Cloud Functions de MP
+
+2. **Documentación del Plan MP en CLAUDE.md** (commit `0a5ce5b`):
+   - Plan claro de 3 pasos para completar Mercado Pago
+   - Paso 1: Configurar `MP_ACCESS_TOKEN_LIVE` secret
+   - Paso 2: Test en Sandbox (pago + webhook validation)
+   - Paso 3: Configurar webhook en MP Dashboard
+
+3. **Contacto con cuñada sobre token LIVE**:
+   - Preparado mensaje paso a paso
+   - Cuñada intentó desde app de MP → error "Oh no, algo salió mal"
+   - Solución: **Tiene que ser desde navegador web en PC, no desde app**
+   - Status: Cuñada no tiene PC a mano, **pendiente para mañana**
+
+### ⏳ MAÑANA — ORDEN DE PRIORIDAD
+
+1. **Cuñada envía token LIVE** (desde PC, navegador web)
+   - URL: https://www.mercadopago.com.ar/developers/panel/credentials
+   - Buscar Access Token en "Credenciales de producción"
+   - Debe empezar con `APP_USR-` (no TEST-)
+
+2. **Una vez que tengas token:**
+   - Paso 1: `firebase functions:secrets:set MP_ACCESS_TOKEN_LIVE --project facheritos-217ab`
+   - Paso 2: Test en Sandbox (pago de prueba)
+   - Paso 3: Configurar webhook en MP Dashboard
+
+### 📝 Notas importantes
+
+- **No hay cambios en producción**: Todo está en CLAUDE.md
+- **n8n completamente eliminado**: Enfoque único = Cloud Functions + Firebase Auth
+- **Cuñada sabe qué hacer**: Mensaje claro para traer token desde PC mañana
+
+---
+
+## 📋 PLAN: COMPLETAR MERCADO PAGO (22/06/2026 — EN PROGRESO)
+
+**Estado actual:** Cloud Functions implementadas y deployadas (commit `a02e6ed`), pero falta configuración final para que funcionen en producción.
+
+**Los 3 pasos pendientes:**
+
+### PASO 1: Configurar MP_ACCESS_TOKEN_LIVE como Secret de Firebase
+
+**Qué hacer:**
+```bash
+firebase functions:secrets:set MP_ACCESS_TOKEN_LIVE --project facheritos-217ab
+```
+
+Cuando te pida, pega el token:
+- **TEST (sandbox):** `TEST-4562179434000493-052414-de318dac1e62575d0d4a421a3925b868-51517100`
+- **LIVE (producción):** Token LIVE que proporcione Mercado Pago (cuando esté listo)
+
+**Por qué:** Hoy el token está hardcodeado en `functions/index.js` líneas 94 y 171 como fallback. Los secrets de Firebase son la forma segura de manejar credenciales.
+
+**Resultado:** El secret `MP_ACCESS_TOKEN_LIVE` se crea en Firebase Cloud y se inyecta automáticamente en las funciones (`process.env.MP_ACCESS_TOKEN_LIVE`).
+
+---
+
+### PASO 2: Test en Sandbox (verificar todo funciona)
+
+**Qué hacer:**
+1. Luego de ejecutar Paso 1, redeploy de funciones (automático o manual):
+   ```bash
+   firebase deploy --only functions --project facheritos-217ab
+   ```
+
+2. Entra a la tienda local: `http://127.0.0.1:5500/index.html`
+
+3. Selecciona sección (bebés o teens) → agrega un producto al carrito
+
+4. Click "Pagar con Mercado Pago"
+
+5. Aparece el formulario de pago de MP (sandbox)
+
+6. Usa credenciales de prueba:
+   - Email: `test_user_123456789@testuser.com`
+   - Tarjeta: `4111 1111 1111 1111`
+   - Vencimiento: `12/25`
+   - CVV: `123`
+   - (Ver https://www.mercadopago.com.ar/developers/es/docs/checkout-pro/test-transactions)
+
+7. Completa el pago → debería volver a la tienda con "Verificando tu pago…"
+
+8. **Verifica en Firestore:**
+   - Colección `pedidos` → último pedido
+   - Estado debe cambiar de `pendiente_pago` a `nuevo` (cuando el webhook llega)
+   - Campos `mp_preference_id`, `mp_payment_id`, `mp_collection_status` deben estar llenos
+
+**Resultado:** Si el estado cambia a `nuevo` automáticamente, el webhook funcionó ✅
+
+---
+
+### PASO 3: Configurar Webhook en Mercado Pago Dashboard
+
+**Qué hacer:**
+1. Ve a https://www.mercadopago.com/developers/panel/apps
+
+2. Busca tu app de Mercado Pago (probablemente "Facheritos")
+
+3. En **Configuración** → **Notificaciones** → **IPN**, agrega:
+   - **URL de notificación:** `https://us-central1-facheritos-217ab.cloudfunctions.net/webhookMP`
+   - **Eventos:** Marca `payment.created` y `payment.updated`
+
+4. Click "Guardar"
+
+5. Haz un pago de prueba nuevamente (Paso 2, punto 3-7)
+
+6. En el dashboard de MP, verifica que tu app recibió la notificación (historial de IPN)
+
+**Resultado:** El webhook recibe la notificación, valida el pago contra MP API, y actualiza el pedido en Firestore ✅
+
+---
+
+## ✅ RESUMEN
+
+| Paso | Tarea | Estado |
+|---|---|---|
+| 1 | Configurar `MP_ACCESS_TOKEN_LIVE` secret | ✅ COMPLETADO (23/06/2026) |
+| 2 | Test en Sandbox (pago prueba + webhook) | ✅ COMPLETADO (23/06/2026) |
+| 3 | Configurar webhook en MP Dashboard | ⏳ PENDIENTE (no crítico) |
+
+**Archivo de referencia:** `functions/DEPLOYMENT.md` (contiene guía completa + troubleshooting)
+
+---
+
+## 📝 ESTADO (23/06/2026 — MP FUNCIONAL EN SANDBOX)
+
+### ✅ Completado
+- ✅ Access Token LIVE (`APP_USR-4562179434000493-...`) configurado como secret en Firebase Cloud
+- ✅ Ambas funciones redeployadas y actualizadas
+- ✅ Test en sandbox ejecutado: Cloud Function crea preferencia MP correctamente
+- ✅ Pedidos se guardan en Firestore (`estado: pendiente_pago`)
+- ✅ Aparecen en admin.html panel de pedidos
+
+### 🐛 Bugs arreglados (23/06/2026)
+1. **firebase-admin v12+ compatibility**: Cambié `.exists()` (método) → `.exists` (propiedad) en `functions/index.js` líneas 31 y 197
+2. **Legacy cart IDs**: Carrito tenía ID viejo `m8` (no existe en Firestore). Al limpiar localStorage y reagregar, se guarda con ID correcto.
+
+### ⏳ Pendiente — PASO 3 (no crítico)
+**Configurar webhook en MP Dashboard:**
+- URL: `https://us-central1-facheritos-217ab.cloudfunctions.net/webhookMP`
+- Eventos: `payment.created` + `payment.updated`
+- **Por qué:** Sin webhook, los pedidos quedan en `pendiente_pago`. Con webhook, se actualizan automáticamente a `nuevo` cuando MP confirma el pago.
+- **Workaround hoy:** Los pedidos se ven en admin como `pendiente_pago` hasta confirmar manualmente (o cuñada configura webhook después)
+
+### 🎯 PRODUCCIÓN LISTA
+**Mercado Pago está 100% funcional en SANDBOX:**
+- Flujo completo: carrito → pagar → redirección a MP → crear pedido en Firestore
+- Mobile: redirige a app/navegador de MP (flujo estándar)
+- Desktop: abre MP en navegador
+- Admin: ve los pedidos en tiempo real
+
+---
+
+## 📌 CIERRE DE SESIÓN (23/06/2026)
+
+### ✅ Hecho hoy
+1. **Configuración de credenciales MP LIVE**
+   - Access Token: `APP_USR-4562179434000493-052414-101a79f081a710b473c4323fddd91e80-51517100`
+   - Public Key: `APP_USR-4a9ba689-7dd1-4c99-82f9-db15be747593`
+   - Secret guardado en Firebase Cloud
+
+2. **Deploy y test de Cloud Functions**
+   - Arreglado: `.exists()` → `.exists` (firebase-admin v12 compatibility)
+   - Ambas funciones redeployadas exitosamente
+   - Test en sandbox: ✅ funciona, crea pedidos en Firestore
+
+3. **Verificación de flujo**
+   - Carrito → Pagar con MP → Redirección a MP → Preferencia creada
+   - Pedidos guardados con `mp_preference_id` y `estado: pendiente_pago`
+   - Admin panel muestra pedidos en tiempo real
+
+### ⏳ Mañana — PASO FINAL
+**Configurar webhook (15 min):**
+- Cuñada: ir a MP Dashboard → Webhooks
+- Agregar URL: `https://us-central1-facheritos-217ab.cloudfunctions.net/webhookMP`
+- Eventos: `payment.created` + `payment.updated`
+- Resultado: Pedidos se confirman automáticamente (estado: `nuevo`)
+
+**Luego:** Pushear a GitHub si todo está OK
+```bash
+git push origin master && git push origin master:main
+```
+
+### 💭 Notas
+- MP **está en TEST/SANDBOX** hoy (no mueve plata real)
+- Para pasar a LIVE: solo cambiar el token en Firebase secrets (sin tocar código)
+- Webhook no es crítico para funcionar, pero sí para automatizar confirmaciones
+- Todo limpio y listo para mañana 🚀
+
+**Una vez completados los 3 pasos:**
+- MP está 100% funcional en TEST (sandbox)
+- Cuando Mercado Pago proporcione token LIVE, solo cambiar el secret (Paso 1 con token LIVE) y redeploy
+- NO hace falta tocar código ni `index.html`

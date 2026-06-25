@@ -8,7 +8,7 @@
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
   font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com;
   img-src 'self' data: blob: https://firebasestorage.googleapis.com;
-  connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firebasestorage.googleapis.com https://*.cloudfunctions.net https://api.emailjs.com https://esm.sh;
+  connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebaseio.com https://firebasestorage.googleapis.com https://*.cloudfunctions.net https://api.emailjs.com https://esm.sh https://dani9515.app.n8n.cloud;
   frame-src https://facheritos-217ab.firebaseapp.com;
   object-src 'none';
   base-uri 'self';
@@ -1035,15 +1035,15 @@ window.__fbCfg = {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { httpsCallable, getFunctions } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, query, where, orderBy, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
-import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
 const app = initializeApp(window.__fbCfg);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const fbFunctions = getFunctions(app);
 const storage = getStorage(app);
-const functions = getFunctions(app);
 const ADMIN_EMAIL = 'facheritos@operlog.com.ar';
 
 function esc(s) {
@@ -1174,8 +1174,13 @@ window.doRegister = async function() {
       codigo_postal: document.getElementById('rg-cp').value.trim(),
       email
     };
-    // Enviar email de verificación (continueUrl devuelve al usuario a la tienda)
-    try { await sendEmailVerification(user, { url: location.origin }); } catch(_) {}
+    // Enviar email de verificación vía Cloud Function + n8n
+    try {
+      const generateVerification = httpsCallable(fbFunctions, 'generateVerificationLink');
+      await generateVerification({ email, userName: nombre });
+    } catch(e) {
+      console.error('Error generando link de verificación:', e);
+    }
     okEl.textContent = '✅ ¡Cuenta creada! Revisá tu email para verificarla.';
     okEl.style.display = 'block';
     showToast('✅', '¡Bienvenido/a! Verificá tu email');
@@ -1189,11 +1194,15 @@ window.doRegister = async function() {
 window.resetPass = async function() {
   const email = document.getElementById('li-email').value.trim();
   if (!email) { showToast('⚠️', 'Ingresá tu email primero'); return; }
-  try { await sendPasswordResetEmail(auth, email); showToast('✅', 'Revisá tu email para resetear la contraseña'); }
+  try {
+    const generateReset = httpsCallable(fbFunctions, 'generatePasswordResetLink');
+    await generateReset({ email });
+    showToast('✅', 'Revisá tu email para resetear la contraseña');
+  }
   catch(e) {
-    const msg = e.code === 'auth/too-many-requests' ? 'Demasiados intentos, esperá unos minutos'
-              : e.code === 'auth/invalid-email'     ? 'Email inválido'
-              : 'No encontramos una cuenta con ese email';
+    const msg = e.message?.includes('not-found') ? 'No encontramos una cuenta con ese email'
+              : e.message?.includes('too-many-requests') ? 'Demasiados intentos, esperá unos minutos'
+              : 'Error enviando email de reset';
     showToast('⚠️', msg);
   }
 }
@@ -1202,7 +1211,8 @@ window.doLogout = async function() { await signOut(auth); goPage('store'); }
 
 window.resendVerificationEmail = async function() {
   try {
-    await sendEmailVerification(currentUser, { url: location.origin });
+    const generateVerification = httpsCallable(fbFunctions, 'generateVerificationLink');
+    await generateVerification({ email: currentUser.email, userName: currentPerfil?.nombre || 'Usuario' });
     const msgEl = document.getElementById('resend-msg');
     msgEl.textContent = '✅ Email reenviado. Revisá tu bandeja.';
     msgEl.style.display = 'block';
@@ -1765,6 +1775,31 @@ window.sendMP = async function() {
   }
 };
 
+// ─── NOTIFICAR PEDIDO A N8N ───
+// Llama webhook n8n para que mande email bonito de pedido confirmado
+async function notificarPedidoN8N(pedido, clienteEmail, clienteNombre) {
+  try {
+    const itemsTexto = pedido.items
+      .map(i => i.replace('•', '').trim())
+      .join(', ');
+
+    await fetch('https://dani9515.app.n8n.cloud/webhook/pedido-confirmado', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customer_name: clienteNombre,
+        customer_email: clienteEmail,
+        order_id: pedido.id,
+        order_total: `$${pedido.total.toLocaleString('es-AR')}`,
+        order_items: itemsTexto
+      })
+    });
+  } catch (e) {
+    console.error('Error notificando pedido a n8n:', e);
+    // No bloquear el flujo si n8n falla
+  }
+}
+
 window.sendWA = async function() {
   if (!cart.length) return;
   const btn = document.getElementById('btn-send-wa');
@@ -1895,6 +1930,12 @@ window.sendWA = async function() {
       creado: serverTimestamp()
     });
     pedidoId = pedidoRef.id;
+    // Notificar pedido a n8n para email personalizado
+    await notificarPedidoN8N(
+      { id: pedidoId, total: totalFinal, items: lines },
+      clienteEmail,
+      nombre
+    );
   } catch(e) {}
 
   // Limpiar estado de comprobante para el próximo pedido
