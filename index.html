@@ -895,6 +895,33 @@ textarea.finp { resize: none; min-height: 60px; }
   </div>
 </div>
 
+<!-- SHEET RESET PASSWORD LINK -->
+<div class="ov" id="ov-reset" onclick="if(event.target===this)closeOv('ov-reset')">
+  <div class="sheet">
+    <div class="sheet-pull"></div>
+    <div class="sheet-hd"><div class="sheet-ttl">Recuperar contraseña</div><button class="x-btn" onclick="closeOv('ov-reset')">×</button></div>
+    <div class="sheet-bd">
+      <div style="margin-bottom:16px">
+        <p style="color:var(--text-secondary);margin-bottom:12px">Tu link de recuperación:</p>
+        <div id="reset-link-box" style="background:var(--surface-alt);border:2px solid var(--border-strong);border-radius:var(--r-md);padding:12px;word-break:break-all;font-size:12px;color:var(--text-muted);font-family:monospace;cursor:pointer;user-select:all" onclick="copyResetLink()" title="Click para copiar">
+          <span id="reset-link-text"></span>
+        </div>
+        <button class="btn-black" style="width:100%;margin-top:12px" onclick="copyResetLink()">📋 Copiar link</button>
+      </div>
+      <p style="color:var(--text-faint);font-size:12px;line-height:1.6">
+        <strong>En mobile:</strong><br>
+        1️⃣ Toca "Copiar link"<br>
+        2️⃣ Abrí Safari o Chrome<br>
+        3️⃣ Pegá el link en la barra<br>
+        4️⃣ Sigue los pasos para cambiar tu contraseña<br>
+        <br>
+        <strong>También recibiste el link por email</strong> — si preferís, hacé click en el link del email.
+      </p>
+      <button class="btn-black" style="width:100%;background:#f0f0f0;color:#111;margin-top:12px" onclick="closeOv('ov-reset')">Listo</button>
+    </div>
+  </div>
+</div>
+
 <!-- SHEET SOBRE NOSOTROS (DEPRECATED — migrado a página) -->
 <!-- <div class="ov" id="ov-about" onclick="if(event.target===this)closeOv('ov-about')">
   <div class="sheet">
@@ -1120,6 +1147,10 @@ window.goPage = function(p) {
 }
 
 window.goToProfile = function() { goPage(auth.currentUser ? 'profile' : 'auth'); }
+window.openOv = function(id) {
+  document.getElementById(id).classList.add('on');
+}
+
 window.closeOv = function(id) {
   document.getElementById(id).classList.remove('on');
   if (id === 'ov-det') history.replaceState({}, '', location.pathname);
@@ -1196,8 +1227,11 @@ window.resetPass = async function() {
   if (!email) { showToast('⚠️', 'Ingresá tu email primero'); return; }
   try {
     const generateReset = httpsCallable(fbFunctions, 'generatePasswordResetLink');
-    await generateReset({ email });
-    showToast('✅', 'Revisá tu email para resetear la contraseña');
+    const result = await generateReset({ email });
+    // Guardar el link y mostrar modal
+    document.getElementById('reset-link-text').textContent = result.data.resetLink;
+    openOv('ov-reset');
+    showToast('✅', 'Link copiado — abrí tu navegador');
   }
   catch(e) {
     const msg = e.message?.includes('not-found') ? 'No encontramos una cuenta con ese email'
@@ -1205,6 +1239,24 @@ window.resetPass = async function() {
               : 'Error enviando email de reset';
     showToast('⚠️', msg);
   }
+}
+
+window.copyResetLink = function() {
+  const linkText = document.getElementById('reset-link-text').textContent;
+  if (!linkText) return;
+  navigator.clipboard.writeText(linkText).then(() => {
+    showToast('✅', 'Link copiado al portapapeles');
+  }).catch(() => {
+    // Fallback si clipboard no funciona
+    const box = document.getElementById('reset-link-box');
+    const range = document.createRange();
+    range.selectNodeContents(box);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    document.execCommand('copy');
+    showToast('✅', 'Link copiado al portapapeles');
+  });
 }
 
 window.doLogout = async function() { await signOut(auth); goPage('store'); }

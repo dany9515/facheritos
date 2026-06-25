@@ -294,7 +294,7 @@ exports.generatePasswordResetLink = functions.https.onCall(async (data, context)
       // No lanzar error; n8n puede fallar pero el link se generó OK
     }
 
-    return { success: true, message: 'Link enviado' };
+    return { success: true, resetLink };
 
   } catch (error) {
     console.error('generatePasswordResetLink error:', error);
