@@ -685,3 +685,91 @@ git push origin master && git push origin master:main
 - MP está 100% funcional en TEST (sandbox)
 - Cuando Mercado Pago proporcione token LIVE, solo cambiar el secret (Paso 1 con token LIVE) y redeploy
 - NO hace falta tocar código ni `index.html`
+
+---
+
+## 📧 INTEGRACIÓN N8N — EMAILS PERSONALIZADOS (24/06/2026)
+
+### ✅ Hecho en esta sesión
+
+**Problema:** Los emails de Firebase Auth se ven genéricos en inglés.  
+**Solución:** Integración completa con n8n para templates HTML personalizados con marca Facheritos.
+
+#### 1️⃣ Cloud Functions nuevas (`functions/index.js`)
+
+Dos funciones callable que generan links de verificación/reset y llaman webhooks n8n:
+
+```javascript
+exports.generateVerificationLink = functions.https.onCall(async (data, context) => {
+  // Genera link verificación + POST a n8n webhook
+  // Retorna: { success: true, message: 'Link enviado' }
+})
+
+exports.generatePasswordResetLink = functions.https.onCall(async (data, context) => {
+  // Genera link reset + POST a n8n webhook
+  // Retorna: { success: true, message: 'Link enviado' }
+})
+```
+
+**Deploy:** `firebase deploy --only functions --project facheritos-217ab`
+
+#### 2️⃣ Cambios en `index.html`
+
+- Línea 1038: Agregado `import { httpsCallable, getFunctions }`
+- Línea 1046: `const fbFunctions = getFunctions(app)`
+- Línea 1178 (registro): Reemplazado `sendEmailVerification()` → `generateVerificationLink()` Cloud Function
+- Línea 1192 (reset): Reemplazado `sendPasswordResetEmail()` → `generatePasswordResetLink()` Cloud Function
+- Línea 1205 (reenvío): Idem registro
+- Línea 1779: Agregada función `notificarPedidoN8N()` que POST a webhook n8n `/webhook/pedido-confirmado`
+- Línea 1940: Llamada a `notificarPedidoN8N()` después de guardar pedido
+
+**CSP actualizado** (línea 11): Agregado `https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://dani9515.app.n8n.cloud`
+
+#### 3️⃣ Webhooks n8n activos
+
+| Workflow | Webhook URL | Función |
+|---|---|---|
+| Verificación de Email | `https://dani9515.app.n8n.cloud/webhook/verificar-email` | Email verificación con link |
+| Recuperación de Contraseña | `https://dani9515.app.n8n.cloud/webhook/recuperar-contrasena` | Email reset con link |
+| Notificaciones de Pedidos | `https://dani9515.app.n8n.cloud/webhook/pedido-confirmado` | Email confirmación pedido |
+
+#### 4️⃣ Templates HTML personalizados
+
+**Estilo:** Streetwear Facheritos monocromo + volt (#e8ff00)
+- Logo FACHERITOS en header negro
+- Botones CTA amarillo volt con sombra dura (4px 4px 0 #111)
+- Bordes negros gruesos (3px)
+- Fonts: Arial (web-safe, para email compatibility)
+- Font-weight: 900 (bold)
+- Separadores volt
+
+**Campos dinámicos:**
+- Email verificación: `{{user_name}}`, `{{verification_link}}`
+- Email reset: `{{user_name}}`, `{{reset_link}}`
+- Email pedido: `{{customer_name}}`, `{{order_id}}`, `{{order_items}}`, `{{order_total}}`
+
+**Importante:** Las fuentes personalizadas (Bangers, Permanent Marker) **no funcionan en email clients** — todos usan web-safe fonts.
+
+### 🔧 Cómo mantener/actualizar
+
+**Si cambias un template:**
+1. Abrí n8n (`dani9515.app.n8n.cloud`)
+2. Editá el campo "HTML Body" del nodo de email
+3. Pegá el HTML nuevo
+4. Click "Save" (debe decir "Saved" en verde)
+5. Publicá el workflow ("Publish")
+
+**Si agrgas variables nuevas:**
+- En Cloud Functions: agregar a `body: JSON.stringify({ ... })`
+- En n8n template: agregar `{{variable_name}}` en el HTML
+
+### 📊 Testing
+
+**Local:** VSCode Go Live necesita agregar localhost a API key en Google Cloud Console
+**Producción:** Todo funciona en `facheritos.operlog.com.ar` ✅
+
+**Flujos testeados (24/06/2026):**
+- ✅ Registro → Email verificación llega
+- ✅ Reset contraseña → Email reset llega
+- ✅ Pedido → Email confirmación llega
+- ✅ Todos con estilo Facheritos (negro + volt)
