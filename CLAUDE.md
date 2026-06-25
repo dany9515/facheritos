@@ -773,3 +773,46 @@ exports.generatePasswordResetLink = functions.https.onCall(async (data, context)
 - ✅ Reset contraseña → Email reset llega
 - ✅ Pedido → Email confirmación llega
 - ✅ Todos con estilo Facheritos (negro + volt)
+
+---
+
+## 🔧 FIX: INTERPOLACIÓN DE VARIABLES EN TEMPLATES N8N (25/06/2026)
+
+### ⚠️ Problema encontrado
+
+Los botones/links en los emails no funcionaban porque los templates usaban sintaxis de Handlebars (`{{variable}}`) en lugar de la sintaxis correcta de n8n (`{{ $json.variable }}`).
+
+**Resultado:** Los links llegaban literales:
+- `href="{{reset_link}}"` en lugar de `href="https://...actual-link..."`
+- El botón era clickeable pero no hacía nada
+
+### ✅ Solución: Actualizar 3 workflows
+
+**Cambios aplicados:**
+
+1. **Recuperación de Contraseña** (`Y7lUwNsw5BjleWAU`)
+   - `{{reset_link}}` → `{{ $json.reset_link }}`
+   - Probado: ✅ Botón funciona, link es clickeable
+
+2. **Verificación de Email** (`Y7lUwNsw5BjleWAU`)
+   - `{{user_name}}` → `{{ $json.user_name }}`
+   - `{{verification_link}}` → `{{ $json.verification_link }}`
+
+3. **Notificaciones de Pedidos** (`ghnjYMt1i11t6csk`)
+   - Email a cliente: `{{customer_name}}`, `{{order_id}}`, `{{order_items}}`, `{{order_total}}` → `{{ $json.* }}`
+   - (Email a Facheritos ya estaba correcto)
+
+**Todos publicados en producción (25/06/2026).**
+
+### 📌 Recordatorio para futuros cambios
+
+**En n8n, SIEMPRE usar:**
+```html
+<!-- ❌ INCORRECTO (Handlebars) -->
+<a href="{{reset_link}}">Click</a>
+
+<!-- ✅ CORRECTO (n8n syntax) -->
+<a href="{{ $json.reset_link }}">Click</a>
+```
+
+El campo `html` en el nodo "Email Send" tiene `=` al inicio, lo que le dice a n8n que interpole expresiones. Pero la sintaxis dentro del HTML debe ser `{{ $json.field }}`, no `{{field}}`.
