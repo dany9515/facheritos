@@ -137,7 +137,7 @@ exports.crearPreferenciaMP = functions.https.onCall(async (data, context) => {
     // Paso 4: Devolver al cliente
     return {
       preferenceId: mpPref.id,
-      initPoint: mpPref.sandbox_init_point || mpPref.init_point,
+      initPoint: mpPref.init_point || mpPref.sandbox_init_point,
       pedidoId: pedidoId
     };
 
