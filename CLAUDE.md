@@ -815,4 +815,84 @@ Los botones/links en los emails no funcionaban porque los templates usaban sinta
 <a href="{{ $json.reset_link }}">Click</a>
 ```
 
+---
+
+## ✅ MERCADO PAGO LIVE EN PRODUCCIÓN (28/06/2026)
+
+### 🎯 Status: COMPLETADO
+
+Mercado Pago está 100% funcional en **LIVE** (pagos reales, no sandbox).
+
+### 🐛 Bugs arreglados (28/06/2026)
+
+**1. Variable `functions` no definida en `index.html:1752`**
+- **Error:** `ReferenceError: functions is not defined` en `sendMP()`
+- **Causa:** Línea 1752 usaba `functions` en lugar de `fbFunctions`
+- **Fix:** Cambió `httpsCallable(functions, 'crearPreferenciaMP')` → `httpsCallable(fbFunctions, 'crearPreferenciaMP')`
+- **Commit:** `582b3b0`
+
+**2. Token TEST hardcodeado como fallback**
+- **Causa:** `functions/index.js` línea 93 y 171 tenían fallback TEST: `'TEST-4562179434000493-...'`
+- **Fix:** Reemplazó con token LIVE: `'APP_USR-4562179434000493-052414-101a79f081a710b473c4323fddd91e80-51517100'`
+- **Commit:** `b68cea8`
+
+**3. Priorización incorrecta de sandbox sobre LIVE (BUG CRÍTICO)**
+- **Causa:** `functions/index.js:140` devolvía `mpPref.sandbox_init_point || mpPref.init_point`
+  - Mercado Pago devuelve AMBOS en la respuesta
+  - El código priorizaba sandbox, ignorando LIVE
+  - Resultado: Siempre mostraba "pagos ficticios" aunque se usara token LIVE
+- **Fix:** Cambió a `mpPref.init_point || mpPref.sandbox_init_point`
+  - Ahora prioriza LIVE y solo usa sandbox como fallback
+- **Commit:** `dfa0e3f`
+
+### ✅ Configuración final
+
+**Credenciales:**
+- **Access Token:** `APP_USR-4562179434000493-052414-101a79f081a710b473c4323fddd91e80-51517100` (LIVE)
+- **Public Key:** `APP_USR-4a9ba689-7dd1-4c99-82f9-db15be747593`
+- **Webhook URL:** `https://us-central1-facheritos-217ab.cloudfunctions.net/webhookMP`
+- **Eventos:** `payment.created` + `payment.updated`
+
+**Cloud Functions:**
+- ✅ `crearPreferenciaMP` (callable) — Crea preferencia en MP API con token LIVE
+- ✅ `webhookMP` (HTTP) — Recibe notificaciones de MP, valida pago, actualiza pedido en Firestore
+
+**Estado de pedidos:**
+- `pendiente_pago` → (webhook) → `nuevo` (cuando MP confirma pago)
+- `pendiente_pago` → (fallido si rechaza) → `fallido`
+
+### 🎯 Flujo completo testeado (28/06/2026)
+
+1. Cliente selecciona sección (bebés/teens)
+2. Agrega productos al carrito
+3. Click "Pagar con Mercado Pago"
+4. Cloud Function crea preferencia con token LIVE
+5. Cliente redirigido a MP (URL LIVE, no sandbox)
+6. Cliente completa pago
+7. MP envía notificación al webhook
+8. Webhook valida pago en MP API
+9. Pedido actualiza a `estado: nuevo`
+10. Cliente ve confirmación en la tienda
+
+**Verificado:** ✅ Sin "pagos ficticios", flujo completamente en producción.
+
+### 📋 Notas importantes
+
+- **Validación HMAC:** Pendiente implementar (no crítico, el webhook valida contra MP API)
+- **Clave secreta webhook:** `b422576faf7aa40dd3ae71bd8990e3e5046a5a71445c5c428eda4cc63d792a43` (guardada para futura validación HMAC)
+- **Token TEST:** Descontinuado, no usar más
+- **Modo de prueba:** NO usar "pagos ficticios" en producción
+
+### 🚀 PRODUCCIÓN
+
+**Tienda 100% operativa con Mercado Pago en LIVE:**
+- ✅ Pagos reales funcionando
+- ✅ Webhooks configurados
+- ✅ Pedidos se confirman automáticamente
+- ✅ Emails (n8n) enviando confirmaciones
+- ✅ Auth + verificación email funcionando
+- ✅ Firestore + Storage rules endurecidas
+
+**TODO LISTO PARA CLIENTES REALES** 🚀
+
 El campo `html` en el nodo "Email Send" tiene `=` al inicio, lo que le dice a n8n que interpole expresiones. Pero la sintaxis dentro del HTML debe ser `{{ $json.field }}`, no `{{field}}`.
