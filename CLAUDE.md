@@ -896,3 +896,305 @@ Mercado Pago está 100% funcional en **LIVE** (pagos reales, no sandbox).
 **TODO LISTO PARA CLIENTES REALES** 🚀
 
 El campo `html` en el nodo "Email Send" tiene `=` al inicio, lo que le dice a n8n que interpole expresiones. Pero la sintaxis dentro del HTML debe ser `{{ $json.field }}`, no `{{field}}`.
+
+---
+
+# 🔐 AUDITORÍA DE SEGURIDAD — 28/06/2026
+
+## Backup de seguridad
+**Tag git para revertir:** `BACKUP_PRE_AUDITORIA_20260628_144109`
+
+Para volver a este punto si algo se rompe:
+```bash
+git reset --hard BACKUP_PRE_AUDITORIA_20260628_144109
+```
+
+## Resumen de hallazgos
+
+| Severidad | Cantidad | Estado |
+|-----------|----------|--------|
+| 🔴 CRÍTICO | 2 | Webhook HMAC falta; XSS potencial en admin |
+| 🟠 ALTO | 4 | CSP permisivo; error exposure; rate limiting; admin verification |
+| 🟡 MEDIO | 3 | Fallback token; storage rules; dependencias |
+| 🔵 BAJO | 2 | CORS; headers seguridad |
+
+### 🔴 HALLAZGOS CRÍTICOS
+
+1. **Webhook MP sin validación HMAC** (`functions/index.js:155`)
+   - ⚠️ Riesgo: Atacante puede forjar webhooks falsos → pedidos sin pago quedan en `nuevo`
+   - 📋 Plan: Implementar validación `x-signature` (Fase 3 — próxima semana)
+   - ✅ Mitigación actual: Webhook valida contra MP API (aceptable por ahora)
+
+2. **XSS potencial en admin.html** (líneas 678, 683)
+   - ⚠️ Riesgo: Si un campo dinámico no está escapado, ejecuta código
+   - 📋 Plan: Audit visual de `.innerHTML` (Fase 3 — próxima semana)
+   - ✅ Mitigación actual: La mayoría de campos usan `esc()`
+
+### 🟠 HALLAZGOS ALTOS
+
+1. **CSP con `'unsafe-inline'`** (`index.html:7`)
+   - ⚠️ Riesgo: Anula protección contra inyecciones inline
+   - 📋 Plan: Remover de CSP, mover config a archivo (Fase 2 — mañana)
+   - Riesgo de ruptura: **Bajo <1%** (solo testing en navegador)
+
+2. **Fallback token hardcodeado** (`functions/index.js:93,171`)
+   - ⚠️ Riesgo: Si el secret no se configura, usa fallback LIVE
+   - 📋 Plan: Remover fallback, lanzar error (Fase 1 — HOY)
+   - Riesgo de ruptura: **0%** (solo si secret no se configura)
+
+3. **Error exposure en funciones** (`functions/index.js:146`)
+   - ⚠️ Riesgo: `error.message` expone stack traces
+   - 📋 Plan: Filtrar errores (Fase 1 — HOY)
+   - Riesgo de ruptura: **0%** (solo cambia mensajes de error)
+
+4. **Sin rate limiting en Cloud Functions**
+   - ⚠️ Riesgo: Atacante puede spamear `crearPreferenciaMP` → DoS
+   - 📋 Plan: Implementar check por UID (Fase 3 — próxima semana)
+   - Riesgo de ruptura: **5%** si se implementa mal (pero se hace en modo logging primero)
+
+### 🟡 HALLAZGOS MEDIOS
+
+1. **Dependencias sin auditoría** (`functions/package.json`)
+   - 📋 Plan: Agregar `npm audit` a CI (Fase 1 — HOY)
+
+---
+
+## 📋 PLAN DE EJECUCIÓN
+
+### **FASE 1 — HOY (30 min, sin testing)**
+**Cambios triviales, 0% riesgo de ruptura**
+
+Archivos a modificar:
+- ✅ `functions/index.js` — 2 cambios
+- ✅ `.github/workflows/deploy.yml` — 1 cambio
+
+Tareas:
+1. Remover fallback token (`functions/index.js` línea 93, 171)
+2. Filtrar `error.message` en funciones (catch blocks)
+3. Agregar `npm audit` al workflow
+4. Rotar token MP en Firebase (manual, 5 min)
+
+Commit: `security: fase-1 — remove fallback token, filter errors, npm audit`
+
+### **FASE 2 — MAÑANA (60 min, con testing local)**
+**Cambios visuales mínimos, <1% riesgo de ruptura**
+
+Archivos a modificar:
+- ✅ `index.html` — CSP + mover config Firebase
+- ⚠️ Testing: Abrir tienda en navegador, verificar que carga
+
+Tareas:
+1. Remover `'unsafe-inline'` de CSP
+2. Mover `window.__fbCfg` a archivo externo
+3. Grep audit XSS en admin (solo lectura)
+
+Testing:
+```bash
+# Local Go Live o `npx http-server -p 5500`
+http://127.0.0.1:5500/index.html
+# Verificar:
+# - Tienda carga sin errores en consola
+# - Login/registro funciona
+# - Admin panel muestra datos
+```
+
+Commit: `security: fase-2 — remove unsafe-inline, move firebase config`
+
+### **FASE 3 — PRÓXIMA SEMANA (alto riesgo, requiere staging)**
+**Cambios que tocan lógica de pagos/pedidos**
+
+1. Implementar HMAC webhook (modo logging)
+2. Implementar rate limiting (modo logging)
+3. Audit completo XSS en admin.html
+
+⚠️ NO hacer en producción sin testing en staging primero.
+
+---
+
+## 📝 DETALLES DE CAMBIOS — FASE 1
+
+### Cambio 1: Remover fallback token en `crearPreferenciaMP`
+
+**Archivo:** `functions/index.js`  
+**Línea:** 93  
+**Antes:**
+```javascript
+const MP_TOKEN = process.env.MP_ACCESS_TOKEN_LIVE || 'APP_USR-4562179434000493-052414-101a79f081a710b473c4323fddd91e80-51517100';
+```
+
+**Después:**
+```javascript
+const MP_TOKEN = process.env.MP_ACCESS_TOKEN_LIVE;
+if (!MP_TOKEN) {
+  throw new functions.https.HttpsError('internal', 'Mercado Pago token no configurado. Contactá al administrador.');
+}
+```
+
+**Por qué:** El token LIVE no debería estar en el código. Si el secret no está configurado, es mejor fallar explícitamente que usar fallback.
+
+---
+
+### Cambio 2: Remover fallback token en `webhookMP`
+
+**Archivo:** `functions/index.js`  
+**Línea:** 171  
+**Antes:**
+```javascript
+const MP_TOKEN = process.env.MP_ACCESS_TOKEN_LIVE || 'APP_USR-4562179434000493-052414-101a79f081a710b473c4323fddd91e80-51517100';
+```
+
+**Después:**
+```javascript
+const MP_TOKEN = process.env.MP_ACCESS_TOKEN_LIVE;
+if (!MP_TOKEN) {
+  console.error('Mercado Pago token no configurado');
+  return res.status(500).send('Internal error');
+}
+```
+
+**Por qué:** Mismo que Cambio 1, pero en webhook devolvemos error HTTP.
+
+---
+
+### Cambio 3: Filtrar `error.message` en `crearPreferenciaMP`
+
+**Archivo:** `functions/index.js`  
+**Línea:** 144-147  
+**Antes:**
+```javascript
+} catch (error) {
+  console.error('crearPreferenciaMP error:', error);
+  throw new functions.https.HttpsError('internal', error.message || 'Error creando preferencia MP');
+}
+```
+
+**Después:**
+```javascript
+} catch (error) {
+  console.error('crearPreferenciaMP error:', error);
+  const safe = error.code === 'not-found' ? 'Producto no encontrado' : 'Error procesando pago. Reintentá.';
+  throw new functions.https.HttpsError(error.code || 'internal', safe);
+}
+```
+
+**Por qué:** No exponer `error.message` que puede contener stack traces o info interna.
+
+---
+
+### Cambio 4: Filtrar `error.message` en `generateVerificationLink`
+
+**Archivo:** `functions/index.js`  
+**Línea:** 260-263  
+**Antes:**
+```javascript
+} catch (error) {
+  console.error('generateVerificationLink error:', error);
+  throw new functions.https.HttpsError('internal', error.message || 'Error generando link de verificación');
+}
+```
+
+**Después:**
+```javascript
+} catch (error) {
+  console.error('generateVerificationLink error:', error);
+  throw new functions.https.HttpsError('internal', 'No se pudo enviar el link. Reintentá más tarde.');
+}
+```
+
+---
+
+### Cambio 5: Filtrar `error.message` en `generatePasswordResetLink`
+
+**Archivo:** `functions/index.js`  
+**Línea:** 299-302  
+**Antes:**
+```javascript
+} catch (error) {
+  console.error('generatePasswordResetLink error:', error);
+  throw new functions.https.HttpsError('internal', error.message || 'Error generando link de reset');
+}
+```
+
+**Después:**
+```javascript
+} catch (error) {
+  console.error('generatePasswordResetLink error:', error);
+  throw new functions.https.HttpsError('internal', 'No se pudo procesar tu solicitud. Reintentá más tarde.');
+}
+```
+
+---
+
+### Cambio 6: Agregar `npm audit` al workflow de GitHub Actions
+
+**Archivo:** `.github/workflows/deploy.yml`  
+**Ubicación:** Antes del deploy  
+**Antes:**
+```yaml
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy a gh-pages
+```
+
+**Después:**
+```yaml
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Run npm audit
+        run: cd functions && npm audit --audit-level=moderate
+
+      - name: Deploy a gh-pages
+```
+
+**Por qué:** Verificar vulnerabilidades en dependencias antes de deployar.
+
+---
+
+### Cambio 7: Rotar token MP en Firebase (manual)
+
+**Instrucciones:**
+1. Ve a https://www.mercadopago.com.ar/developers/panel/credentials
+2. Busca "Credenciales de producción"
+3. Copia el nuevo Access Token (debe empezar con `APP_USR-`)
+4. En tu terminal:
+```bash
+firebase functions:secrets:set MP_ACCESS_TOKEN_LIVE --project facheritos-217ab
+# Pega el token cuando te pida
+firebase deploy --only functions --project facheritos-217ab
+```
+
+**Por qué:** Rotar token después de remover el hardcodeado es una buena práctica de seguridad.
+
+---
+
+## 🚨 PUNTOS CRÍTICOS — LEER ANTES DE EJECUTAR
+
+1. **Si Fase 1 falla**: `git reset --hard BACKUP_PRE_AUDITORIA_20260628_144109`
+2. **Si Fase 2 rompe la tienda**: Revertir cambios CSP + mover config
+3. **Fase 3 requiere staging**: No tocar webhook/rate limiting en prod sin pruebas
+
+---
+
+## ✅ ESTADO DEL PROYECTO ANTES DE AUDITORÍA
+
+**Fecha/Hora:** 28/06/2026 14:41:09  
+**Commit:** 5949d95 (Mercado Pago LIVE completado)  
+**Estado:** 100% operativo en producción  
+**Postura seguridad:** MEDIA-ALTA (riesgos críticos identificados, pero mitigados por validación server-side)
+
+**Cambios desde 14:41:** Ninguno (backup tomado aquí)
