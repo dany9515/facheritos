@@ -1749,7 +1749,7 @@ window.sendMP = async function() {
   try {
     // Llamar Cloud Function callable para crear preferencia MP
     // La función calcula el total y valida precios en el servidor
-    const crearPreferenciaMP = httpsCallable(functions, 'crearPreferenciaMP');
+    const crearPreferenciaMP = httpsCallable(fbFunctions, 'crearPreferenciaMP');
     const nota = document.getElementById('by-note').value.trim();
 
     const result = await crearPreferenciaMP({
