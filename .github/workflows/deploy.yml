@@ -15,6 +15,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Run npm audit
+        run: cd functions && npm audit --audit-level=moderate
+
       - name: Deploy a gh-pages
         uses: peaceiris/actions-gh-pages@v3
         with:

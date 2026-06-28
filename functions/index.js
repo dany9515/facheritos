@@ -90,7 +90,10 @@ exports.crearPreferenciaMP = functions.https.onCall(async (data, context) => {
     const pedidoId = pedidoRef.id;
 
     // Paso 3: Llamar API de MP para crear preferencia
-    const MP_TOKEN = process.env.MP_ACCESS_TOKEN_LIVE || 'APP_USR-4562179434000493-052414-101a79f081a710b473c4323fddd91e80-51517100';
+    const MP_TOKEN = process.env.MP_ACCESS_TOKEN_LIVE;
+    if (!MP_TOKEN) {
+      throw new functions.https.HttpsError('internal', 'Mercado Pago token no configurado. Contactá al administrador.');
+    }
     console.log(`MP Token loaded: ${MP_TOKEN.substring(0, 20)}...`);
 
     const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
@@ -143,7 +146,8 @@ exports.crearPreferenciaMP = functions.https.onCall(async (data, context) => {
 
   } catch (error) {
     console.error('crearPreferenciaMP error:', error);
-    throw new functions.https.HttpsError('internal', error.message || 'Error creando preferencia MP');
+    const safe = error.code === 'not-found' ? 'Producto no encontrado' : 'Error procesando pago. Reintentá.';
+    throw new functions.https.HttpsError(error.code || 'internal', safe);
   }
 });
 
@@ -168,7 +172,11 @@ exports.webhookMP = functions.https.onRequest(async (req, res) => {
 
   try {
     // Paso 1: Validar pago contra MP API (source of truth, no confiar en el webhook body)
-    const MP_TOKEN = process.env.MP_ACCESS_TOKEN_LIVE || 'APP_USR-4562179434000493-052414-101a79f081a710b473c4323fddd91e80-51517100';
+    const MP_TOKEN = process.env.MP_ACCESS_TOKEN_LIVE;
+    if (!MP_TOKEN) {
+      console.error('Mercado Pago token no configurado');
+      return res.status(500).send('Internal error');
+    }
 
     const mpResponse = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
       method: 'GET',
@@ -259,7 +267,7 @@ exports.generateVerificationLink = functions.https.onCall(async (data, context) 
 
   } catch (error) {
     console.error('generateVerificationLink error:', error);
-    throw new functions.https.HttpsError('internal', error.message || 'Error generando link de verificación');
+    throw new functions.https.HttpsError('internal', 'No se pudo enviar el link. Reintentá más tarde.');
   }
 });
 
@@ -298,6 +306,6 @@ exports.generatePasswordResetLink = functions.https.onCall(async (data, context)
 
   } catch (error) {
     console.error('generatePasswordResetLink error:', error);
-    throw new functions.https.HttpsError('internal', error.message || 'Error generando link de reset');
+    throw new functions.https.HttpsError('internal', 'No se pudo procesar tu solicitud. Reintentá más tarde.');
   }
 });
