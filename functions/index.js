@@ -90,8 +90,8 @@ exports.crearPreferenciaMP = functions.https.onCall(async (data, context) => {
     const pedidoId = pedidoRef.id;
 
     // Paso 3: Llamar API de MP para crear preferencia
-    // Token: por ahora TEST hardcodeado, luego será un secret
-    const MP_TOKEN = process.env.MP_ACCESS_TOKEN_LIVE || 'TEST-4562179434000493-052414-de318dac1e62575d0d4a421a3925b868-51517100';
+    const MP_TOKEN = process.env.MP_ACCESS_TOKEN_LIVE || 'APP_USR-4562179434000493-052414-101a79f081a710b473c4323fddd91e80-51517100';
+    console.log(`MP Token loaded: ${MP_TOKEN.substring(0, 20)}...`);
 
     const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
@@ -168,7 +168,7 @@ exports.webhookMP = functions.https.onRequest(async (req, res) => {
 
   try {
     // Paso 1: Validar pago contra MP API (source of truth, no confiar en el webhook body)
-    const MP_TOKEN = process.env.MP_ACCESS_TOKEN_LIVE || 'TEST-4562179434000493-052414-de318dac1e62575d0d4a421a3925b868-51517100';
+    const MP_TOKEN = process.env.MP_ACCESS_TOKEN_LIVE || 'APP_USR-4562179434000493-052414-101a79f081a710b473c4323fddd91e80-51517100';
 
     const mpResponse = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
       method: 'GET',
