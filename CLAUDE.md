@@ -1000,6 +1000,92 @@ http://127.0.0.1:5500/index.html
 
 Commit: `security: fase-2 — remove unsafe-inline, move firebase config`
 
+---
+
+## 🔍 FASE 2A — AUDIT XSS ADMIN.HTML (28/06/2026 — COMPLETADO)
+
+**Status:** ✅ Audit finalizado, 1 hallazgo crítico identificado
+
+### Hallazgos
+
+#### 🔴 CRÍTICO — Línea 705 (category dropdown)
+
+```javascript
+document.getElementById('cat-list').innerHTML = cats.map(c=>`<option value="${c}">`).join('');
+```
+
+**Problema:** `${c}` **sin `esc()`** → viene de `p.categoria` (user-generated en Firestore)
+
+**Ataque posible:**
+```
+Usuario inserta categoría: Ropa" onmouseover="alert('XSS
+↓ HTML generado:
+<option value="Ropa" onmouseover="alert('XSS">
+↓ Si alguien mueve el mouse → ejecuta JS
+```
+
+**Severidad:** 🔴 **ALTO**  
+**Mitigación actual:** Firestore reglas limitan campos, pero es debilidad de defensa en profundidad
+
+**Fix requerido:**
+```javascript
+// ANTES:
+document.getElementById('cat-list').innerHTML = cats.map(c=>`<option value="${c}">`).join('');
+
+// DESPUÉS:
+document.getElementById('cat-list').innerHTML = cats.map(c=>`<option value="${esc(c)}">`).join('');
+```
+
+---
+
+#### ✅ BIEN ESCAPADOS (sin cambios necesarios)
+
+| Línea | Código | Estado |
+|-------|--------|--------|
+| 682 | `esc(p.foto_url)`, `esc(p.nombre)`, `esc(p.categoria)` | ✅ Seguro |
+| 710 | `esc(p.foto_url)`, `esc(p.nombre)` en template | ✅ Seguro |
+| 995 | `esc(o.items\|\|'')` | ✅ Seguro |
+| 997 | `esc(o.cliente_nombre)`, `esc(o.estado)`, `esc(o.cliente_telefono)` | ✅ Seguro |
+
+---
+
+#### 🟡 BAJO RIESGO — Atributos onclick (sin `esc()`, pero mitigado)
+
+| Línea | Código | Mitigación |
+|-------|--------|------------|
+| 710 | `onclick="openForm('${p.id}')"` | Firebase auto-genera IDs seguros (alfanuméricos) |
+| 997 | `onclick="setOrd('${o.id}','...')"` | Firebase auto-genera IDs seguros |
+
+**Conclusión:** Aunque técnicamente es mejor `esc()` en todos lados, los IDs de Firestore son generados internamente → riesgo de inyección es prácticamente 0.
+
+---
+
+### **FASE 2B — CAMBIOS SEGUROS (CSP + CONFIG)** (EN PROGRESO)
+
+#### PASO 1 ✅ COMPLETADO (28/06/2026)
+**Mover Firebase config a archivo externo**
+
+- ✅ Removido bloque `<script> window.__fbCfg = {...}</script>` de `index.html` (10 líneas)
+- ✅ Agregado import: `import { firebaseConfig } from "./firebase-config.js"` (línea 1026)
+- ✅ Cambio: `initializeApp(window.__fbCfg)` → `initializeApp(firebaseConfig)` (línea 1033)
+- ✅ Testing en Go Live: **tienda funciona 100% sin errores de JS**
+- ✅ Commit: `22ab12f`
+
+**Resultado:** Removido 1 de los scripts inline (aquellos que requieren `'unsafe-inline'`)
+
+---
+
+#### PASO 2 — PENDIENTE (próximo paso)
+**Remover `'unsafe-inline'` de CSP** (líneas 7-8 de `index.html`)
+
+- [ ] Remover de `script-src` y `style-src`
+- [ ] Testing en Go Live
+- [ ] Commit + Deploy
+
+**Nota:** Este paso podría requerir cambios adicionales si hay otros scripts/estilos inline.
+
+---
+
 ### **FASE 3 — PRÓXIMA SEMANA (alto riesgo, requiere staging)**
 **Cambios que tocan lógica de pagos/pedidos**
 
