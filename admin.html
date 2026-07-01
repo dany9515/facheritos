@@ -1002,6 +1002,24 @@ async function renderPeds() {
 window.setOrd = async function(id, estado) {
   await updateDoc(doc(db,'pedidos',id), {estado});
   showToast(estado==='confirmado'?'✅':'🗑', estado==='confirmado'?'Pedido confirmado':'Pedido cancelado');
+  if (estado === 'confirmado') {
+    try {
+      const snap = await getDoc(doc(db,'pedidos',id));
+      const o = snap.data();
+      const itemsTxt = Array.isArray(o.items) ? o.items.join(', ') : (o.items || '');
+      await fetch('https://dani9515.app.n8n.cloud/webhook/pedido-confirmado', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          customer_name:  o.cliente_nombre  || 'Cliente',
+          customer_email: o.cliente_email   || '',
+          order_id:       id.slice(-6),
+          order_total:    `$${Number(o.total).toLocaleString('es-AR')}`,
+          order_items:    itemsTxt
+        })
+      });
+    } catch(e) { console.error('n8n email error:', e); }
+  }
   await renderPeds(); await updateBadge();
 }
 
