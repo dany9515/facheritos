@@ -1360,3 +1360,30 @@ git reset --hard BACKUP_PRE_AUDITORIA_20260628_144109
 2. **Fase 2C (CSP):** Planificar semana específica para refactorizar 124 elementos inline
 3. **Fase 3 (HMAC + rate limiting):** Después de Fase 2C, requiere staging
 4. **MP real:** Cloud Function + webhook + validación HMAC para producción (post-seguridad)
+
+---
+
+## ✅ NOTIFICACIONES N8N EN ADMIN (30/06/2026)
+
+**Feature nueva:** Cuando el admin confirma un pedido desde el panel (`setOrd(..., 'confirmado')`), se envía automáticamente un webhook a n8n para disparar un email de confirmación personalizado al cliente.
+
+**Cambios:**
+- `admin.html` líneas 1004-1021: Agregado webhook POST a `https://dani9515.app.n8n.cloud/webhook/pedido-confirmado`
+- Datos enviados:
+  - `customer_name`: Nombre del cliente
+  - `customer_email`: Email del cliente
+  - `order_id`: Últimos 6 dígitos del ID (referencia acortada)
+  - `order_total`: Total formateado a pesos argentinos
+  - `order_items`: Items del pedido (join con ", ")
+
+**Flujo:**
+1. Admin abre un pedido en el panel
+2. Admin hace click en "✅ Confirmado"
+3. `setOrd()` actualiza estado a `confirmado` en Firestore
+4. Webhook notifica a n8n con los datos
+5. n8n envía email de confirmación personalizado al cliente
+
+**Manejo de errores:** Si n8n no responde, el error se loguea en consola pero no interrumpe el flujo (el pedido se confirma igual).
+
+**Commit:** `3126454` (30/06/2026)  
+**Status:** ✅ EN PRODUCCIÓN
